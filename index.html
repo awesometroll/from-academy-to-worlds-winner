@@ -1082,11 +1082,11 @@ function eventsForMonth(month){let out=[];
  if(month===3)out.push(...withMatchContext({international:true,competition:'First Stand'},()=>[].concat(firstStand())));
  if(month===4){out.push(lckOpening());for(let l of ['LEC','LCS','LCP','CBLOL','LCK CL','ACADEMY'])out.push(leagueSeason(l,`${l} 상반기 정규시즌`,l==='LEC'?1:2))}
  if(month===5){for(let l of ['LEC','LCS','LCP','CBLOL','LCK CL','ACADEMY'])out.push(singleTopSix(l,`${l} 상반기 플레이오프`));out.push(lplSplitStage(2))}
- if(month===6){out.push(...withMatchContext({international:true,competition:'Asia Masters'},()=>dgciTournament()));out.push(...withMatchContext({international:true,competition:'WSCI'},()=>wsciTournament()));out.push(lckRoadMSI());out.push(...lplSplitFinals(2));s.msiSeeds={...(s.msiSeeds||{}),...Object.fromEntries(['LPL','LEC','LCS','LCP','CBLOL'].map(l=>[l,qualify(l,l==='CBLOL'?1:2)]))};out.push(...withMatchContext({international:true,competition:'MSI'},()=>msiEvent()))}
+ if(month===6){out.push(...withMatchContext({international:true,competition:'Asia Masters'},()=>dgciTournament()));out.push(lckRoadMSI());out.push(...lplSplitFinals(2));s.msiSeeds={...(s.msiSeeds||{}),...Object.fromEntries(['LPL','LEC','LCS','LCP','CBLOL'].map(l=>[l,qualify(l,l==='CBLOL'?1:2)]))};out.push(...withMatchContext({international:true,competition:'MSI'},()=>msiEvent()))}
  if(month===7){out.push(lckLater());out.push(lplSplitStage(3));for(let l of ['LEC','LCS','LCP','CBLOL','LCK CL','ACADEMY'])out.push(leagueSeason(l,`${l} 하반기 정규시즌`,l==='LEC'?1:2));out.push(...withMatchContext({international:true,competition:'EWC'},()=>ewcTournament()))}
  if(month===8){out.push(...lckFinals());out.push(...lplSplitFinals(3));for(let l of ['LEC','LCS','LCP','CBLOL','LCK CL','ACADEMY'])out.push(singleTopSix(l,`${l} 하반기 플레이오프`))}
  if(month===9&&asianYear(s.year))out.push(...withMatchContext({international:true,competition:'Asian Games'},()=>[asianTournament()]));
- if(month===10){out.push(...withMatchContext({international:true,competition:'Worlds'},()=>worldsEvents()));out.push(...demaciaCup())}
+ if(month===10){out.push(...withMatchContext({international:true,competition:'Worlds'},()=>worldsEvents()));out.push(...withMatchContext({international:true,competition:'WSCI'},()=>wsciTournament()));out.push(...demaciaCup())}
  if(month===11)out.push(withMatchContext({international:true,competition:'Worlds'},()=>knockout(s.worldsQualified||[],'Worlds 녹아웃 스테이지',5)));
  if(month===12)out.push(...kespaCup());return out}
 function getMonthComments(m){
