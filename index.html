@@ -1378,6 +1378,12 @@ function archiveSplitOf(e,title,league){
  if(league==='LEC'&&/Versus/.test(n))return 'Versus';
  if(league==='LCS'&&/Lock-In|시즌 개막/.test(n))return 'Lock-In';
  if(league==='CBLOL'&&/Cup|시즌 개막/.test(n))return 'Cup';
+ if(league==='CBLOL'&&/상반기/.test(n))return 'Split 1';
+ if(league==='CBLOL'&&/하반기/.test(n))return 'Split 2';
+ if(league==='LCK'&&/레전드|라이즈/.test(n))return 'R3 ~ R5';
+ if(league==='LCK'&&/정규시즌/.test(n))return 'R1 ~ R2';
+ if(['LEC','LCS'].includes(league)&&/상반기/.test(n))return 'Spring';
+ if(['LEC','LCS'].includes(league)&&/하반기/.test(n))return 'Summer';
  if(league==='LCP'&&/Split 1|시즌 개막/.test(n))return 'Split 1';
  if(/상반기/.test(n))return '상반기';
  if(/하반기/.test(n))return '하반기';
