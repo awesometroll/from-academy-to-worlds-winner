@@ -1604,7 +1604,7 @@ function moveRegion(x){
 function transfer(){
  let p=me(),logs=s.transferLog||[],byYear=[...new Set(logs.map(x=>x.year))].sort((a,b)=>b-a);
  if(!window.marketFilter)window.marketFilter='ALL';
- let visible=logs.filter(x=>window.marketFilter==='ALL'||String(x.year)===String(window.marketFilter));
+ let visible=logs.filter(x=>x.type!=='루키 생성'&&(window.marketFilter==='ALL'||String(x.year)===String(window.marketFilter)));
  let current=activePlayers(teamOf(p)||{players:[]});
  return `<section class="card"><h2>🔄 이적 시장</h2>
  <p>현재 계약: ${esc(p.team)} · 연봉 ${s.salary.toFixed(0)}만 원 · 잔여 ${s.contract}년</p>
