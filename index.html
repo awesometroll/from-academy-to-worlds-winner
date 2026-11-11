@@ -144,11 +144,11 @@ function makeWorld(){
   for(let j=0;j<5;j++){let p=makePlayer(REAL[name]?.[j]||genName(),POS[j],league,name,!!REAL[name]?.[j]);if(!REAL[name]?.[j])p.placeholder=true;players[p.id]=p;team.players.push(p.id)}teams[name]=team;
  }
  // LCK는 기존 아카데미·챌린저스 구조를 사용한다. 두 팀 체계가 없는 해외 리그에는
- // 화면에 노출되지 않는 별도 리그 아카데미 풀을 만들고, 리그마다 루키 20명(포지션별 4명)을 둔다.
+ // 화면에 노출되지 않는 별도 리그 아카데미 풀을 만들고, 리그마다 루키 40명(포지션별 8명)을 둔다.
  for(const league of ['LPL','LEC','LCS','LCP','CBLOL']){
   const poolId=`__${league}_ACADEMY_POOL__`;
   const pool={id:poolId,name:`${league} 리그 아카데미`,league:'ACADEMY',sourceLeague:league,hidden:true,players:[],staff:[],wins:0,losses:0,sets:0,prestige:25};
-  for(const pos of POS)for(let n=0;n<4;n++){
+  for(const pos of POS)for(let n=0;n<8;n++){
    let rookie=makePlayer(genRookieName(),pos,'ACADEMY',poolId,false,Math.floor(r(16,19)));
    rookie.placeholder=false;rookie.rookie=true;rookie.generated=true;rookie.academyOrigin=true;rookie.academyLeague=league;rookie.academyDebutYear=2026;
    rookie.stats=rookie.stats.map(v=>rnd(clamp(v+r(-3,3),42,65)));rookie.fame=Math.round(r(2,13));rookie.contractYears=0;rookie.contractUntil=2026;
@@ -383,8 +383,19 @@ function news(t){s.news.unshift({year:s.year,month:s.month,text:t});s.news=s.new
 function activePlayers(t){return (t.players||[]).map(id=>s.world.players[id]).filter(p=>p&&!p.retired)}
 function logMove(type,p,from,to,extra=''){
  if(!s.transferLog)s.transferLog=[];
- const duplicate=s.transferLog.some(x=>x.year===s.year&&x.type===type&&x.player===(p?.name||'')&&x.from===(from||'')&&x.to===(to||'')&&x.extra===(extra||''));if(duplicate)return;
- s.transferLog.unshift({year:s.year,month:s.month,sequence:(s.transferSequence=(s.transferSequence||0)+1),type,player:p?.name||'',position:p?.pos||'',from:from||'',to:to||'',extra});
+ const playerName=p?.name||'';
+ // FA 방출 후 다른 팀이 영입한 경우, 두 단계를 하나의 이적으로 합친다.
+ if((type==='FA 영입'||type==='이적')&&from==='FA'&&playerName){
+  const pending=s.transferLog.find(x=>x.player===playerName&&x.type==='방출'&&x.to==='FA');
+  if(pending){
+   pending.to=to||'';pending.type='이적';pending.year=s.year;pending.month=s.month;
+   pending.sequence=(s.transferSequence=(s.transferSequence||0)+1);
+   pending.extra=extra||'FA 영입';
+   return;
+  }
+ }
+ const duplicate=s.transferLog.some(x=>x.year===s.year&&x.type===type&&x.player===playerName&&x.from===(from||'')&&x.to===(to||'')&&x.extra===(extra||''));if(duplicate)return;
+ s.transferLog.unshift({year:s.year,month:s.month,sequence:(s.transferSequence=(s.transferSequence||0)+1),type,player:playerName,position:p?.pos||'',from:from||'',to:to||'',extra});
  s.transferLog=s.transferLog.slice(0,400);
 }
 function releaseFromTeam(p,reason){
