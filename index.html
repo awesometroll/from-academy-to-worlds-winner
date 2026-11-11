@@ -1727,7 +1727,7 @@ const _simulateMatchPOMBase=simulateMatch;
 simulateMatch=function(a,b,bo=3,important=false,matchContext={}){
  const before={};for(const teamName of [a,b])for(const pl of activeLineup(s.world.teams[teamName]))before[pl.id]=Number(pl.trust)||58;
  const result=_simulateMatchPOMBase(a,b,bo,important,matchContext);if(!result)return result;
- const candidates=[...activeLineup(s.world.teams[a]),...activeLineup(s.world.teams[b])];
+ const candidates=activeLineup(s.world.teams[result.winner]);
  if(candidates.length){const ranked=candidates.map(pl=>({pl,score:avg(effective(pl))+r(-6,6)+(pl.team===result.winner?3:0)+(Number(pl.trust)-60)*.04})).sort((x,y)=>y.score-x.score);const p=ranked[0].pl;result.pom={id:p.id,name:p.name,team:p.team}}
  for(const teamName of [a,b])for(const pl of activeLineup(s.world.teams[teamName]))if(pl.player&&pl.type==='팀플레이 메이커'&&before[pl.id]!=null){const d=(Number(pl.trust)||58)-before[pl.id];pl.trust=clamp(before[pl.id]+d*(d>0?1.2:.8),0,100)}
  return result;
