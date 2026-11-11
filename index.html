@@ -617,16 +617,16 @@ function offseason(){
  normalizeAllRosters();
  processAIContractExpiries();
  let moves=0;
- let all=Object.values(s.world.players).filter(p=>!p.player&&!p.retired&&p.team!=='FA').sort(()=>Math.random()-.5);
+ let all=Object.values(s.world.players).filter(p=>!p.player&&!p.retired&&p.team!=='FA'&&p.league!=='INVITE'&&s.world.teams[p.team]?.league!=='INVITE').sort(()=>Math.random()-.5);
  for(const p of all){
   if(Math.random()>=.085)continue;
-  let same=Object.values(s.world.teams).filter(t=>(!p.contractUntil||p.contractUntil<=s.year)&&t.id!==p.team&&canJoinTeam(t,p.pos)&&eligibleForTeam(p,t)&&recruitFit(t,p)>=.075&&leagueTransferWeight(t,p)>.04&&sensibleReplacement(p,activePlayers(t).find(x=>x.pos===p.pos&&!x.player)));
+  let same=Object.values(s.world.teams).filter(t=>t.league!=='INVITE'&&(!p.contractUntil||p.contractUntil<=s.year)&&t.id!==p.team&&canJoinTeam(t,p.pos)&&eligibleForTeam(p,t)&&recruitFit(t,p)>=.075&&leagueTransferWeight(t,p)>.04&&sensibleReplacement(p,activePlayers(t).find(x=>x.pos===p.pos&&!x.player)));
   if(!same.length)continue;
   let from=teamOf(p),to=weightedPick(same,t=>recruitFit(t,p)*Math.max(.1,teamRecruitReputation(t)/70));
   if(transferPlayer(p,to,'구단 명성·선수 오버롤·선수 명성 매칭')){moves++;if(moves<18&&shouldShowTransferNews(p,from,to))news(`🔄 ${p.name}: ${from.name} → ${to.name} 이적`)}
  }
  for(let t of Object.values(s.world.teams)){
-  if(t.hidden)continue;
+  if(t.hidden||t.league==='INVITE')continue;
   if(Math.random()<.18){let old=t.staff[0];t.staff[0]={name:genName(),role:'감독',skill:Math.round(r(60,89)),fictional:true};
    logMove('감독 교체',null,old?.name||'',t.name,t.staff[0].name+' 부임');
    if(Math.random()<.25&&teamHasMajorNews(t))news(`📋 ${t.name} 감독 교체 (${old.name} → ${t.staff[0].name})`)}
