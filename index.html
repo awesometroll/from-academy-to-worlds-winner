@@ -426,13 +426,33 @@ function recruitFit(t,p){
  return Math.max(0,skillFit*fameFit*tierFit*playerMarketFit(t,p));
 }
 // All newly generated players originate in an academy roster, never directly in CL/first tier.
+function academyLeagueOf(pOrTeam){
+ const value=pOrTeam||{};
+ if(value.league&&value.league!=='ACADEMY')return value.league;
+ if(value.sourceLeague)return value.sourceLeague;
+ if(value.academyLeague)return value.academyLeague;
+ const teamId=value.team||value.id;
+ const chain=FARM_CLUBS.find(c=>c.includes(teamId));
+ const upper=chain&&s.world.teams[chain[chain.length-1]];
+ return upper?.league||'LCK';
+}
+function academyPool(league){
+ const poolId=`__${league}_ACADEMY_POOL__`;
+ let pool=s.world.teams[poolId];
+ if(!pool){pool={id:poolId,name:`${league} 리그 아카데미`,league:'ACADEMY',sourceLeague:league,hidden:true,players:[],staff:[],wins:0,losses:0,sets:0,prestige:25};s.world.teams[poolId]=pool;}
+ return pool;
+}
 function academyRookie(t,pos,reason){
- // 초기 아카데미 인원 및 은퇴 대체 생성만 허용한다. 공석을 이유로 추가 생성하지 않는다.
- return null;
+ if(!t||t.league!=='ACADEMY')return null;
+ const league=academyLeagueOf(t);
+ let rookie=makePlayer(genRookieName(),pos,'ACADEMY',t.id,false,Math.floor(r(16,19)));
+ rookie.placeholder=false;rookie.rookie=true;rookie.generated=true;rookie.academyOrigin=true;rookie.academyLeague=league;rookie.academyDebutYear=s.year;
+ rookie.stats=rookie.stats.map(v=>rnd(clamp(v+r(-3,3),42,65)));rookie.fame=Math.round(r(2,13));rookie.contractYears=0;rookie.contractUntil=s.year;
+ s.world.players[rookie.id]=rookie;t.players.push(rookie.id);
+ logMove('루키 생성',rookie,'신인 풀',t.name,`${league} 아카데미 공석 보충${reason?' · '+reason:''}`);
+ return rookie;
 }
 function rookieFor(t,pos,reason){
- // Retain the old function name for callers, but never generate above the academy level.
- if(t?.league==='ACADEMY')return null;
  return fillVacancy(t,pos,reason);
 }
 let fillingVacancies=new Set();
@@ -442,7 +462,7 @@ function fillVacancy(t,pos,reason){
  fillingVacancies.add(key);
  try{
   // Re-sign unattached players before removing an active lower-division player.
-  let pool=Object.values(s.world.players).filter(p=>!p.retired&&!p.player&&p.pos===pos&&p.team==='FA'&&eligibleForTeam(p,t));
+  let pool=Object.values(s.world.players).filter(p=>!p.retired&&!p.player&&p.pos===pos&&p.team==='FA'&&eligibleForTeam(p,t)&&(p.league!=='ACADEMY'||academyLeagueOf(p)===academyLeagueOf(t)));
   // Never insert a rookie generated in the current year directly into CL/first tier.
   pool=pool.filter(p=>!p.generated||p.academyDebutYear<s.year);
   pool.sort((a,b)=>avg(b.stats)-avg(a.stats));
@@ -451,21 +471,27 @@ function fillVacancy(t,pos,reason){
   // Prefer linked development squads; overseas clubs can recruit from the academy league.
   let chain=FARM_CLUBS.find(c=>c.includes(t.id));
   let lowerNames=chain?chain.slice(0,chain.indexOf(t.id)).reverse():[];
-  if(t.league!=='ACADEMY')lowerNames.push(...LEAGUES.ACADEMY.filter(n=>!lowerNames.includes(n)));
-  const hiddenPool=s.world.teams[`__${t.league}_ACADEMY_POOL__`];if(hiddenPool)lowerNames.push(hiddenPool.id);
+  if(t.league!=='ACADEMY'){
+   const pool=academyPool(t.league);if(!lowerNames.includes(pool.id))lowerNames.push(pool.id);
+  }
   let candidates=[];
   for(const [i,name] of lowerNames.entries()){
    let lower=s.world.teams[name];if(!lower||lower===t)continue;
-   for(const p of activePlayers(lower))if(p.pos===pos&&!p.player&&eligibleForTeam(p,t)&&(!p.generated||p.academyDebutYear<s.year)){
+   for(const p of activePlayers(lower))if(p.pos===pos&&!p.player&&eligibleForTeam(p,t)&&(p.league!=='ACADEMY'||academyLeagueOf(p)===t.league)&&(!p.generated||p.academyDebutYear<s.year)){
     candidates.push({p,lower,score:avg(p.stats)+(i===0?5:0)})
    }
   }
   candidates.sort((a,b)=>b.score-a.score);
   let selected=candidates[0];
   if(selected){let {p,lower}=selected;lower.players=lower.players.filter(id=>id!==p.id);t.players.push(p.id);p.team=t.id;p.league=t.league;
-   logMove('승격·영입',p,lower.name,t.name,reason||'공석 충원');fillVacancy(lower,pos,'상위 리그 선수 공급');return p}
+   logMove('승격·콜업',p,lower.name,t.name,reason||'공석 충원');fillVacancy(lower,pos,'상위 리그 선수 공급');return p}
   if(t.league==='ACADEMY')return academyRookie(t,pos,reason);
-  // No eligible existing player: leave a vacancy rather than fabricate an instant first-tier rookie.
+  // 같은 리그 아카데미에 신인을 생성한 뒤 해당 1군으로 콜업하고, 아카데미 공석도 즉시 보충한다.
+  const source=chain? s.world.teams[chain[chain.indexOf(t.id)-1]] : academyPool(t.league);
+  if(source&&source.league==='ACADEMY'){
+   let rookie=academyRookie(source,pos,'1군 공석 충원');
+   if(rookie){source.players=source.players.filter(id=>id!==rookie.id);t.players.push(rookie.id);rookie.team=t.id;rookie.league=t.league;rookie.freeAgent=false;rookie.contractYears=1;rookie.contractUntil=s.year+1;rookie.salaryAI=Math.max(salaryFloorForLeague(t.league),offerSalary(t,rookie));logMove('승격·콜업',rookie,source.name,t.name,reason||'공석 충원');fillVacancy(source,pos,'콜업 인원 대체 생성');return rookie;}
+  }
   return null;
  }finally{fillingVacancies.delete(key)}
 }
@@ -506,6 +532,7 @@ function sensibleReplacement(p,victim){
 function transferPlayer(p,to,why){
  // 계약 기간이 남은 AI 선수는 이적 불가. 계약 만료 후 FA가 된 경우에만 이동 가능.
  if(!p||p.player||p.retired||!to||p.team===to.id||!eligibleForTeam(p,to))return false;
+ if(p.league==='ACADEMY'&&(to.league!==academyLeagueOf(p)||to.league==='ACADEMY'))return false;
  if(Number(p.contractUntil)>s.year)return false;
  let from=s.world.teams[p.team];if(!from||!canJoinTeam(to,p.pos))return false;
  if(recruitFit(to,p)<.055||Math.random()>leagueTransferWeight(to,p))return false;
@@ -1211,6 +1238,7 @@ function createOffers(){
  if(s.offersGeneratedForYear===s.year&&s.contractPending&&Array.isArray(s.offers))return;
  let p=me(),current=teamOf(p);
  let candidates=Object.values(s.world.teams).filter(t=>t.id!==current.id)
+ .filter(t=>p.league!=='ACADEMY'||(t.league===academyLeagueOf(p)&&t.league!=='ACADEMY'))
  .filter(t=>eligibleForTeam(p,t)&&recruitFit(t,p)>=.055&&activePlayers(t).some(x=>x.pos===p.pos&&!x.player))
  .map(t=>({t,weight:offerSuitability(t,p)})).filter(x=>x.weight>.003);
  let options=[];
@@ -1228,6 +1256,7 @@ function acceptOffer(i){
  let offer=s.offers?.[i];if(!offer)return;
  if(Number(s.contract)>0||!s.contractPending){alert('현재 계약이 남아 있어 이적할 수 없습니다. 계약 만료 후 FA 상태에서만 이적할 수 있습니다.');return;}
  let p=me(),old=teamOf(p),dest=s.world.teams[offer.team];if(!dest)return;
+ if(p.league==='ACADEMY'&&(dest.league!==academyLeagueOf(p)||dest.league==='ACADEMY')){alert('아카데미 선수는 소속 리그 1군으로만 콜업될 수 있습니다.');return;}
  if(!eligibleForTeam(p,dest)){alert('이 팀은 출전 등록 나이 제한으로 지금은 이적할 수 없습니다.');return;}
  if(recruitFit(dest,p)<.055){alert('현재 선수 가치와 구단의 영입 기준이 맞지 않습니다.');return;}
  // If full, replace a player of the SAME position. Never make another lane disappear.
@@ -1249,7 +1278,7 @@ function closeOverlay(){
  render();
 }
 function nextMonth(){
- if(s.contractPending||s.offers?.length){alert('먼저 이적 제안을 선택하거나 재계약 협상을 완료하세요.');tab='transfer';render();return}
+ if(s.contractPending){alert('먼저 이적 제안을 선택하거나 재계약 협상을 완료하세요.');tab='transfer';render();return}
  if(s.retired){alert('선수 커리어가 종료되었습니다.');return}
  let body=document.getElementById('overlayBody'),ov=document.getElementById('overlay');
  ov.classList.remove('hide');
@@ -1544,7 +1573,7 @@ function negotiationRound(){
  const accepted=salary<=cap&&Math.random()<chance;
  n.history.push({salary,years,accepted});
  if(accepted){
-  if(n.kind==='renew'){s.salary=salary;s.contract=years;s.contractPending=false;logMove('재계약',p,t.name,t.name,`연봉 ${salary}만 원 · ${years}년`);news(`📝 ${t.name}과 재계약 합의 · ${years}년 / 연봉 ${salary}만 원`)}
+  if(n.kind==='renew'){s.salary=salary;s.contract=years;s.contractPending=false;s.offers=[];s.negotiation=null;logMove('재계약',p,t.name,t.name,`연봉 ${salary}만 원 · ${years}년`);news(`📝 ${t.name}과 재계약 합의 · ${years}년 / 연봉 ${salary}만 원`)}
   else {const offer=s.offers[n.offerIndex];offer.salary=salary;offer.years=years;acceptOffer(n.offerIndex)}
   s.negotiation=null;save();render();return;
  }
