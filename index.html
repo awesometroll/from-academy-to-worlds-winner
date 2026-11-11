@@ -472,12 +472,12 @@ function fillVacancy(t,pos,reason){
   let chain=FARM_CLUBS.find(c=>c.includes(t.id));
   let lowerNames=chain?chain.slice(0,chain.indexOf(t.id)).reverse():[];
   if(t.league!=='ACADEMY'){
-   const pool=academyPool(t.league);if(!lowerNames.includes(pool.id))lowerNames.push(pool.id);
+   const pool=academyPool(academyLeagueOf(t));if(!lowerNames.includes(pool.id))lowerNames.push(pool.id);
   }
   let candidates=[];
   for(const [i,name] of lowerNames.entries()){
    let lower=s.world.teams[name];if(!lower||lower===t)continue;
-   for(const p of activePlayers(lower))if(p.pos===pos&&!p.player&&eligibleForTeam(p,t)&&(p.league!=='ACADEMY'||academyLeagueOf(p)===t.league)&&(!p.generated||p.academyDebutYear<s.year)){
+   for(const p of activePlayers(lower))if(p.pos===pos&&!p.player&&eligibleForTeam(p,t)&&(p.league!=='ACADEMY'||academyLeagueOf(p)===academyLeagueOf(t))&&(!p.generated||p.academyDebutYear<s.year)){
     candidates.push({p,lower,score:avg(p.stats)+(i===0?5:0)})
    }
   }
@@ -532,7 +532,7 @@ function sensibleReplacement(p,victim){
 function transferPlayer(p,to,why){
  // 계약 기간이 남은 AI 선수는 이적 불가. 계약 만료 후 FA가 된 경우에만 이동 가능.
  if(!p||p.player||p.retired||!to||p.team===to.id||!eligibleForTeam(p,to))return false;
- if(p.league==='ACADEMY'&&(to.league!==academyLeagueOf(p)||to.league==='ACADEMY'))return false;
+ if(p.league==='ACADEMY'&&(to.league==='ACADEMY'||academyLeagueOf(to)!==academyLeagueOf(p)))return false;
  if(Number(p.contractUntil)>s.year)return false;
  let from=s.world.teams[p.team];if(!from||!canJoinTeam(to,p.pos))return false;
  if(recruitFit(to,p)<.055||Math.random()>leagueTransferWeight(to,p))return false;
@@ -1238,7 +1238,7 @@ function createOffers(){
  if(s.offersGeneratedForYear===s.year&&s.contractPending&&Array.isArray(s.offers))return;
  let p=me(),current=teamOf(p);
  let candidates=Object.values(s.world.teams).filter(t=>t.id!==current.id)
- .filter(t=>p.league!=='ACADEMY'||(t.league===academyLeagueOf(p)&&t.league!=='ACADEMY'))
+ .filter(t=>p.league!=='ACADEMY'||(t.league!=='ACADEMY'&&academyLeagueOf(t)===academyLeagueOf(p)))
  .filter(t=>eligibleForTeam(p,t)&&recruitFit(t,p)>=.055&&activePlayers(t).some(x=>x.pos===p.pos&&!x.player))
  .map(t=>({t,weight:offerSuitability(t,p)})).filter(x=>x.weight>.003);
  let options=[];
@@ -1256,7 +1256,7 @@ function acceptOffer(i){
  let offer=s.offers?.[i];if(!offer)return;
  if(Number(s.contract)>0||!s.contractPending){alert('현재 계약이 남아 있어 이적할 수 없습니다. 계약 만료 후 FA 상태에서만 이적할 수 있습니다.');return;}
  let p=me(),old=teamOf(p),dest=s.world.teams[offer.team];if(!dest)return;
- if(p.league==='ACADEMY'&&(dest.league!==academyLeagueOf(p)||dest.league==='ACADEMY')){alert('아카데미 선수는 소속 리그 1군으로만 콜업될 수 있습니다.');return;}
+ if(p.league==='ACADEMY'&&(dest.league==='ACADEMY'||academyLeagueOf(dest)!==academyLeagueOf(p))){alert('아카데미 선수는 소속 리그 1군으로만 콜업될 수 있습니다.');return;}
  if(!eligibleForTeam(p,dest)){alert('이 팀은 출전 등록 나이 제한으로 지금은 이적할 수 없습니다.');return;}
  if(recruitFit(dest,p)<.055){alert('현재 선수 가치와 구단의 영입 기준이 맞지 않습니다.');return;}
  // If full, replace a player of the SAME position. Never make another lane disappear.
