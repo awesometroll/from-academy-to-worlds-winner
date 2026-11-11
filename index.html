@@ -1311,25 +1311,26 @@ function showProfile(pid){let p=s.world.players[pid];if(!p)return;let chart=p.hi
 // Archive navigation: one competition entry per year, with stage buttons inside.
 let archiveCompetitionKey='',archiveStageIndex=0,archiveSplitIndex=0;
 function competitionIdentity(e){
- const n=String(e.name||'').trim(),y=e.year;
- if(/^LCK Cup\b/i.test(n))return 'LCK Cup';
- if(/^KeSPA Cup\b/i.test(n))return 'KeSPA Cup';
- if(/^Demacia Cup\b/i.test(n))return 'Demacia Cup';
- if(/^EWC\b/i.test(n))return 'EWC';
- if(/^Asia Masters\b/i.test(n))return 'Asia Masters';
- if(/^First Stand\b/i.test(n))return 'First Stand';
- if(/^MSI(?:\b|\s)/i.test(n))return 'MSI';
- if(/^Worlds\b/i.test(n))return 'Worlds';
- if(/^LEC Versus\b/i.test(n))return 'LEC Versus';
- if(/^LCK (?:Road to MSI|시즌|정규|레전드|라이즈|1~2)/i.test(n))return 'LCK 시즌';
- if(/^LCS Lock-In/i.test(n)||/^LCS 시즌 개막/i.test(n))return 'LCS Lock-In';
- if(/^CBLOL Cup/i.test(n)||/^CBLOL 시즌 개막/i.test(n))return 'CBLOL Cup';
- if(/^LCP Split 1/i.test(n)||/^LCP 시즌 개막/i.test(n))return 'LCP Split 1';
- const split=n.match(/^(LPL Split [123])\b/i);if(split)return split[1];
- const phase=n.match(/^(.+?) (상반기|하반기) (정규시즌|플레이오프)/);
- if(phase)return phase[1]+' '+phase[2]+' 시즌';
- if(/^LCK CL\b/.test(n))return 'LCK CL';
- if(/^ACADEMY\b/.test(n))return '아카데미';
+ const n=String(e.name||'').trim();
+ if(/^LCK Cup\\b/i.test(n))return 'LCK CUP';
+ if(/^KeSPA Cup\\b/i.test(n))return '케스파컵';
+ if(/^Demacia Cup\\b/i.test(n))return 'Demacia Cup';
+ if(/^EWC\\b/i.test(n))return 'EWC';
+ if(/^WSCI\\b/i.test(n)||/^WSCI 본선/.test(n))return 'WSCI';
+ if(/^Asia Masters\\b/i.test(n))return 'AM';
+ if(/^First Stand\\b/i.test(n))return 'FST';
+ if(/^MSI(?:\\b|\\s)/i.test(n))return 'MSI';
+ if(/^Worlds\\b/i.test(n))return 'WORLDS';
+ if(/^LEC Versus\\b/i.test(n))return 'LEC Versus';
+ if(/^LCK (?:Road to MSI|시즌|정규|레전드|라이즈|1~2)/i.test(n))return 'LCK';
+ if(/^LCK CL\\b/.test(n))return 'LCK CL';
+ if(/^ACADEMY\\b|^아카데미/.test(n))return 'LCK AS';
+ if(/^아시안게임 국가대표 결과/.test(n)||/^아시안게임/.test(n))return '아시안게임';
+ if(/^LCS Lock-In/i.test(n)||/^LCS 시즌 개막/i.test(n))return 'LCS';
+ if(/^CBLOL Cup/i.test(n)||/^CBLOL 시즌 개막/i.test(n))return 'CBLOL';
+ if(/^LCP Split 1/i.test(n)||/^LCP 시즌 개막/i.test(n))return 'LCP';
+ const split=n.match(/^(LPL Split [123])\\b/i);if(split)return 'LPL';
+ const phase=n.match(/^(LCK|LCP|LCS|LPL|CBLOL|LEC) (상반기|하반기) (정규시즌|플레이오프)/);if(phase)return phase[1];
  return n.replace(/ (그룹 대항전|[AB]조 그룹 스테이지|그룹 스테이지|스위스 스테이지|녹아웃 스테이지|플레이인|플레이오프|정규시즌|결승|진출팀 검증)$/,'');
 }
 function competitionStageLabel(e){
@@ -1357,17 +1358,19 @@ function competitionStageLabel(e){
  return '대회 결과';
 }
 // Group all splits from one region under a single league entry, preserving recorded games.
-function archiveLeagueOf(title){
- if(/^LCK Cup$|^KeSPA Cup$/i.test(title))return '';
- if(/^LPL(?:\s|$)/.test(title))return 'LPL';
- if(/^LEC(?:\s|$)/.test(title))return 'LEC';
- if(/^LCS(?:\s|$)/.test(title))return 'LCS';
- if(/^CBLOL(?:\s|$)/.test(title))return 'CBLOL';
- if(/^LCP(?:\s|$)/.test(title))return 'LCP';
- if(/^LCK CL(?:\s|$)/.test(title))return 'LCK CL';
- if(/^아카데미$|^ACADEMY/.test(title))return '아카데미';
- if(/^LCK 시즌$/.test(title))return 'LCK 시즌';
+function archiveCategoryOf(title){
+ if(['WORLDS','MSI','FST','WSCI','AM'].includes(title))return '국제전';
+ if(['LCK','LCP','LCS','LPL','CBLOL','LEC','LCK CUP','LCK CL','LCK AS'].includes(title))return '리그';
+ if(['케스파컵','아시안게임','EWC'].includes(title))return '기타';
+ return '기타';
+}
+function archiveTierOf(title){
+ if(['WORLDS','MSI','FST','LCK','LCP','LCS','LPL','CBLOL','LEC','LCK CUP'].includes(title))return '1부';
+ if(['WSCI','AM','LCK CL','LCK AS'].includes(title))return '챌린저스';
  return '';
+}
+function archiveLeagueOf(title){
+ return ['LCK','LCP','LCS','LPL','CBLOL','LEC','LCK CL','LCK AS'].includes(title)?title:'';
 }
 function archiveSplitOf(e,title,league){
  const n=String(e.name||'');
@@ -1385,10 +1388,10 @@ function archiveSplitOf(e,title,league){
 function archiveGroups(){
  const groups=new Map();
  for(const e of s.tournaments||[]){
-   const original=competitionIdentity(e),league=archiveLeagueOf(original),title=league||original;
+   const title=competitionIdentity(e),category=archiveCategoryOf(title),tier=archiveTierOf(title);
    const key=e.year+'::'+title;
-   if(!groups.has(key))groups.set(key,{key,title,year:e.year,splits:[],month:e.month||0});
-   const g=groups.get(key),splitName=league?archiveSplitOf(e,original,league):'대회 단계';
+   if(!groups.has(key))groups.set(key,{key,title,year:e.year,category,tier,splits:[],month:e.month||0});
+   const g=groups.get(key),splitName=archiveSplitOf(e,title,title);
    let split=g.splits.find(x=>x.name===splitName);
    if(!split){split={name:splitName,stages:[],month:0};g.splits.push(split)}
    split.stages.push(e);split.month=Math.max(split.month,e.month||0);
@@ -1406,22 +1409,27 @@ function selectArchiveStage(index){archiveStageIndex=index;render()}
 function events(){
  const groups=archiveGroups();
  if(!groups.length)return '<section class="card"><h2>🏆 대회 기록</h2><p class="muted">아직 종료된 대회가 없습니다. 월을 진행하세요.</p></section>';
- let lastYear=null;
- const list=groups.map((g,i)=>{
-   let head='';if(lastYear!==g.year){head=`<h3 class="archive-year">📅 ${g.year} 시즌</h3>`;lastYear=g.year}
-   const selected=g.key===archiveCompetitionKey;
-   const allStages=g.splits.flatMap(x=>x.stages);
-   const win=[...allStages].reverse().find(e=>e.winner&&!/(Road to MSI|로투엠|플레이인)/i.test(e.name||'')&&/플레이오프|녹아웃|결승|Cup \(간소화\)|EWC|Demacia/.test(e.name));
-   const split=g.splits[Math.min(Math.max(0,archiveSplitIndex),g.splits.length-1)];
-   const stage=split?.stages[Math.min(Math.max(0,archiveStageIndex),split.stages.length-1)];
-   const splitButtons=g.splits.length>1?`<div class="archive-split-buttons" role="group" aria-label="${esc(g.title)} 스플릿 선택">${g.splits.map((x,j)=>`<button type="button" class="${archiveSplitIndex===j?'on':''}" aria-pressed="${archiveSplitIndex===j}" onclick="selectArchiveSplit(${j})">${esc(x.name)}</button>`).join('')}</div>`:'';
-   const pomKey=split?g.key+'::'+split.name:'';
-   const pomSelected=!!pomKey&&window.pomOpenKey===pomKey;
-   const stageButtons=split?`<div class="archive-stage-row"><div class="archive-stage-buttons" role="group" aria-label="${esc(g.title)} 단계 선택">${split.stages.map((e,j)=>`<button type="button" class="${archiveStageIndex===j?'on':''}" aria-pressed="${archiveStageIndex===j}" onclick="selectArchiveStage(${j})">${esc(competitionStageLabel(e))}</button>`).join('')}</div><button type="button" class="archive-pom-button" aria-expanded="${pomSelected}" aria-controls="pom-archive-${i}" onclick="togglePomArchiveSplit(${i},${g.splits.indexOf(split)})">🏅 POM 순위 <span>${pomSelected?'접기 ▲':'보기 ▼'}</span></button></div>`:'';
-
-   return head+`<button type="button" class="archive-comp ${selected?'chosen':''}" style="width:100%" aria-expanded="${selected}" onclick="selectArchiveCompetition(${i})"><span><b>🏆 ${esc(g.title)}</b><small>${g.splits.length>1?g.splits.length+'개 스플릿 · ':''}${allStages.length}개 단계${win?' · 우승 '+esc(win.winner):''}</small></span><strong>${selected?'접기 ▲':'기록 보기 ▼'}</strong></button>`+(selected?`<div class="archive-inner">${splitButtons}${stageButtons}${pomSelected?`<div class="archive-inner">${pomArchiveHTMLForSplit(split)}</div>`:''}<div class="archive-stage-detail">${stage?eventDetail(stage):'<p>기록 없음</p>'}</div></div>`:'');
+ const categories=['국제전','리그','기타'];
+ const list=categories.map(category=>{
+  const subset=groups.filter(g=>g.category===category);
+  if(!subset.length)return '';
+  const tiers=category==='기타'?['']:['1부','챌린저스'];
+  return `<section class="archive-category"><h3 class="archive-category-title">${category}</h3>${tiers.map(tier=>{
+   const items=subset.filter(g=>g.tier===tier);
+   if(!items.length)return '';
+   return `${tier?`<h4 class="archive-tier-title">${tier}</h4>`:''}<div class="archive-list">${items.map((g,i)=>{
+    const selected=g.key===archiveCompetitionKey;
+    const split=g.splits[Math.min(Math.max(0,archiveSplitIndex),g.splits.length-1)];
+    const stage=split?.stages[Math.min(Math.max(0,archiveStageIndex),split.stages.length-1)];
+    const splitButtons=g.splits.length>1?`<div class="archive-split-buttons" role="group" aria-label="${esc(g.title)} 스플릿 선택">${g.splits.map((x,j)=>`<button type="button" class="${archiveSplitIndex===j?'on':''}" aria-pressed="${archiveSplitIndex===j}" onclick="selectArchiveSplit(${j})">${esc(x.name)}</button>`).join('')}</div>`:'';
+    const pomKey=split?g.key+'::'+split.name:'';
+    const pomSelected=!!pomKey&&window.pomOpenKey===pomKey;
+    const stageButtons=split?`<div class="archive-stage-row"><div class="archive-stage-buttons" role="group" aria-label="${esc(g.title)} 단계 선택">${split.stages.map((e,j)=>`<button type="button" class="${archiveStageIndex===j?'on':''}" aria-pressed="${archiveStageIndex===j}" onclick="selectArchiveStage(${j})">${esc(competitionStageLabel(e))}</button>`).join('')}</div><button type="button" class="archive-pom-button" aria-expanded="${pomSelected}" aria-controls="pom-archive-${i}" onclick="togglePomArchiveSplit(${archiveGroups().indexOf(g)},${g.splits.indexOf(split)})">🏅 POM 순위 <span>${pomSelected?'접기 ▲':'보기 ▼'}</span></button></div>`:'';
+    return `<button type="button" class="archive-comp ${selected?'chosen':''}" style="width:100%" aria-expanded="${selected}" onclick="selectArchiveCompetition(${archiveGroups().indexOf(g)})"><span><b>🏆 ${esc(g.title)}</b><small>${g.year}년</small></span><strong>${selected?'접기 ▲':'기록 보기 ▼'}</strong></button>`+(selected?`<div class="archive-inner">${splitButtons}${stageButtons}${pomSelected?`<div class="archive-inner">${pomArchiveHTMLForSplit(split)}</div>`:''}<div class="archive-stage-detail">${stage?eventDetail(stage):'<p>기록 없음</p>'}</div></div>`:'');
+   }).join('')}</div>`;
+  }).join('')}</section>`;
  }).join('');
- return `<section class="card"><h2>🏆 대회 기록</h2><p class="muted">리그를 선택한 다음 스플릿과 대회 단계를 선택하세요. POM 순위는 각 스플릿의 정규시즌·플레이오프 선택 버튼 옆에서 확인할 수 있습니다.</p><div class="archive-list">${list}</div></section>`;
+ return `<section class="card"><h2>🏆 대회 기록</h2><p class="muted">국제전·리그·기타 대회를 구분해 확인할 수 있습니다.</p>${list}</section>`;
 }
 function bracketCard(m){
  if(!m)return '<div class="bracket-bye">대진 미정</div>';
@@ -1612,7 +1620,7 @@ function shop(){return `<section class="card"><h2>🛒 장비 상점</h2><p>보�
 function buy(i){let it=ITEMS[i];if(s.cash<it[2]||s.inventory.some(x=>x[1]===it[1]))return;s.cash-=it[2];s.inventory.push(it);s.equipped[it[0]]=it[1];save();render()}
 function equip(i){let it=ITEMS[i];if(!s.inventory.some(x=>x[1]===it[1]))return;s.equipped[it[0]]=s.equipped[it[0]]===it[1]?null:it[1];save();render()}
 function sell(i){let it=ITEMS[i],ownedItem=s.inventory.find(x=>x[1]===it[1]);if(!ownedItem)return;s.inventory=s.inventory.filter(x=>x[1]!==it[1]);if(s.equipped[it[0]]===it[1])delete s.equipped[it[0]];s.cash+=(ownedItem?.[2] ?? it[2])*.5;save();render()}
-function records(){let p=me();return `<section class="card"><h2>📚 선수 커리어</h2><p><button onclick="enlist()" ${s.military||s.exempt||s.retired||p.age<20||p.age>27?'disabled':''}>현역병 입대 (20~27세 · 18개월)</button> <button onclick="retire()" ${s.retired?'disabled':''}>선수 은퇴</button></p><div class="stats"><div class="stat">통산 경기<b>${p.games}</b></div><div class="stat">통산 승리<b>${p.wins}</b></div><div class="stat">우승 횟수<b>${s.champions.length}</b></div><div class="stat">명성<b>${p.fame.toFixed(0)}</b></div></div><h3>🇰🇷 아시안게임 국가대표 기록</h3>${Object.values(s.asianSelections||{}).sort((a,b)=>b.year-a.year).map(a=>`<div class="notice"><b>${a.year}년</b> · ${a.playerSelected?'플레이어 선발':'플레이어 미선발'} · ${a.result||'대회 전'}<br><small>${a.names.map(esc).join(' / ')}</small></div>`).join('')||'<p class="muted">국가대표 선발 기록 없음</p>'}<h3>우승 기록</h3>${s.champions.map(x=>`<span class="pill">${x.year} ${esc(x.name)}</span>`).join('')||'<p>아직 없음</p>'}<h3>연도별 개인상</h3>${s.yearAwards.map(x=>`<p>${x.year} MVP: ${esc(x.mvp)} · 신인왕: ${esc(x.rookie)}</p>`).join('')||'<p>시즌 종료 후 발표</p>'}<h3>월간 기록</h3><div class="scroll"><table><tr><th>월</th><th>출전</th><th>승</th><th>평점</th><th>종합</th></tr>${s.history.slice(-24).reverse().map(x=>`<tr><td>${x.year}.${x.month}</td><td>${x.games}</td><td>${x.wins}</td><td>${x.games?Number(x.rating).toFixed(2):'미출전'}</td><td>${avg(x.now).toFixed(2)}</td></tr>`).join('')}</table></div></section>`}
+function records(){let p=me();return `<section class="card"><h2>📚 선수 커리어</h2><p><button onclick="enlist()" ${s.military||s.exempt||s.retired||p.age<20||p.age>27?'disabled':''}>현역병 입대 (20~27세 · 18개월)</button> <button onclick="retire()" ${s.retired?'disabled':''}>선수 은퇴</button></p><div class="stats"><div class="stat">통산 경기<b>${p.games}</b></div><div class="stat">통산 승리<b>${p.wins}</b></div><div class="stat">우승 횟수<b>${s.champions.length}</b></div><div class="stat">명성<b>${p.fame.toFixed(0)}</b></div></div><h3>🇰🇷 아시안게임 국가대표 기록</h3>${Object.values(s.asianSelections||{}).sort((a,b)=>b.year-a.year).map(a=>`<div class="notice"><b>${a.year}년</b> · ${a.playerSelected?'플레이어 선발':'플레이어 미선발'} · ${a.result||'대회 전'}<br><small>${a.names.map(esc).join(' / ')}</small></div>`).join('')||'<p class="muted">국가대표 선발 기록 없음</p>'}<h3>우승 기록</h3>${(()=>{const map={'Worlds':'WORLDS','WORLDS':'WORLDS','MSI':'MSI','First Stand':'FST','FST':'FST','WSCI 본선':'WSCI','WSCI':'WSCI','Asia Masters':'AM','AM':'AM','LCK 시즌':'LCK','LCK':'LCK','LCK Cup':'LCK CUP','LCK CUP':'LCK CUP','아카데미':'LCK AS','ACADEMY':'LCK AS','LCK CL':'LCK CL','아시안게임 국가대표 결과':'아시안게임','아시안게임':'아시안게임','KeSPA Cup':'케스파컵','EWC':'EWC'};const buckets={WORLDS:[],MSI:[],FST:[],WSCI:[],AM:[],LCK:[],LCP:[],LCS:[],LPL:[],CBLOL:[],LEC:[], 'LCK CUP':[],'LCK CL':[],'LCK AS':[],케스파컵:[],아시안게임:[],EWC:[]};for(const x of s.champions){const raw=String(x.name||'');let key=map[raw];if(!key){const ev=(s.tournaments||[]).find(e=>e.year===x.year&&(e.name===raw||competitionIdentity(e)===raw));key=ev?competitionIdentity(ev):raw;}if(buckets[key])buckets[key].push(x.year);}const order=[['국제전',['WORLDS','MSI','FST','WSCI','AM']],['리그',['LCK','LCP','LCS','LPL','CBLOL','LEC','LCK CUP','LCK CL','LCK AS']],['기타',['케스파컵','아시안게임','EWC']]];return order.map(([cat,keys])=>{const rows=keys.filter(k=>buckets[k].length);return rows.length?'<h4>'+cat+'</h4>'+rows.map(k=>'<p><b>'+k+'</b> · '+buckets[k].sort((a,b)=>a-b).map(y=>'• '+y).join(', ')+'</p>').join(''):''}).join('')||'<p>아직 없음</p>'})()}<h3>연도별 개인상</h3>${s.yearAwards.map(x=>`<p>${x.year} MVP: ${esc(x.mvp)} · 신인왕: ${esc(x.rookie)}</p>`).join('')||'<p>시즌 종료 후 발표</p>'}<h3>월간 기록</h3><div class="scroll"><table><tr><th>월</th><th>출전</th><th>승</th><th>평점</th><th>종합</th></tr>${s.history.slice(-24).reverse().map(x=>`<tr><td>${x.year}.${x.month}</td><td>${x.games}</td><td>${x.wins}</td><td>${x.games?Number(x.rating).toFixed(2):'미출전'}</td><td>${avg(x.now).toFixed(2)}</td></tr>`).join('')}</table></div></section>`}
 function newsTab(){return `<section class="card"><h2>📰 e스포츠 뉴스 / 커뮤니티</h2>${s.news.length?s.news.map(x=>`<div class="comment"><small>${x.year}.${x.month}</small> ${esc(x.text)}</div>`).join(''):'<p>뉴스가 없습니다.</p>'}<h3>최근 팬 코멘트</h3>${(s.monthly?.comments||[]).map(x=>`<div class="comment">${esc(x.who)}: ${esc(x.text)}</div>`).join('')}</section>`}
 function settings(){return `<section class="card"><h2>⚙️ 설정</h2><p>저장은 이 브라우저에 자동 저장됩니다. 다른 기기에는 동기화되지 않습니다.</p><p><button onclick="createOffers();save();render()">이적 제안 테스트 생성</button> <button onclick="s.sponsors.push({pay:Math.round(r(30,180))});news('📢 새로운 가상 스폰서 계약 체결');save();render()">스폰서 계약 제안 수락</button></p><p>스폰서 수: ${s.sponsors.length} · 병역 상태: <b>${militaryState()}</b></p><p><button onclick="exportSave()">저장 파일 내보내기</button> <input type="file" id="importFile" accept="application/json" onchange="importSave(event)"></p><p><button onclick="reset()">새 게임 시작 / 저장 초기화</button></p><div class="notice">일부 대회 형식, 국가대표 선발, 계약 협상은 게임용 간소화 규칙입니다. 현실 기록과 동일하다고 보장하지 않습니다.</div></section>`}
 function enlist(auto=false){
