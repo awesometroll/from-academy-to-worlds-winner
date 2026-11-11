@@ -1311,14 +1311,11 @@ function monthlyResultsHTML(ms){
  const rating=games?ms.reduce((n,m)=>n+(m.games?m.rating*m.games:0),0)/games:0;
  const periodSummary={...last,old,now,games,wins,rating:rnd(rating)};
  const comments=getMonthComments(periodSummary);
- const events=[...new Map(ms.flatMap(m=>m.events.map(e=>{
-  const title=monthlyCompetitionIdentity(e);
-  return {title,month:`${m.year}년 ${m.month}월`,winner:e.winner};
- })).map(e=>[e.title,e])).values()];
+ const events=[...new Set(ms.flatMap(m=>(m.events||[]).map(e=>monthlyCompetitionIdentity(e))))];
  return `<h2>📅 ${labels[0]} ~ ${labels[labels.length-1]} 결산</h2><div class="stats"><div class="stat">출전 경기<b>${games}</b></div><div class="stat">승리<b>${wins}</b></div><div class="stat">경기 평점<b>${games?rating.toFixed(2):'미출전'}</b></div><div class="stat">총 수입<b>${income.toFixed(1)}만 원</b></div></div>
  <section class="card"><h3>📈 능력치 증가</h3><p class="muted">${ms.length}개월간의 시작 능력치와 최종 능력치 비교</p><div class="scroll"><table><tr><th>능력치</th><th>시작</th><th>현재</th><th>${ms.length}개월 변화</th></tr>${ATTR.map((a,i)=>{const d=now[i]-old[i];return `<tr><td>${a}</td><td>${old[i].toFixed(2)}</td><td>${now[i].toFixed(2)}</td><td class="${d>=0?'good':'bad'}">${d>=0?'+':''}${d.toFixed(2)}</td></tr>`}).join('')}</table></div></section>
  <section class="card"><h3>💬 코멘트</h3>${comments.length?comments.map(c=>`<div class="comment"><b>${esc(c.who)}</b> ${esc(c.text)}</div>`).join(''): `<p class="muted">${games?'등록된 코멘트가 없습니다.':'출전 경기가 없어 실전 경기력 평가를 하지 않습니다.'}</p>`}<p class="muted">감독 평가: ${rating>=8?'매우 인상적인 활약':games?'다음 달 경기력을 지켜보겠다':'훈련과 주전 경쟁에 집중하자'}</p></section>
- <h3>🏆 이번 기간 대회</h3>${events.length?events.map(e=>`<div class="pill">${esc(e.title)}${e.winner&&!/(Road to MSI|로투엠|플레이인)/i.test(e.title||'')?' · 우승 '+esc(e.winner):''}</div>`).join(''):'<p class="muted">이번 기간 종료된 대회 없음</p>'}`;
+ <h3>🏆 이번 기간 대회</h3>${events.length?events.map(title=>`<div class="pill">${esc(title)}</div>`).join(''):'<p class="muted">이번 기간 종료된 대회 없음</p>'}`;
 }
 function monthlyHTML(m){return monthlyResultsHTML([m])}function setTab(t){tab=t;render()}function save(){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){console.warn('저장 불가:',e)}}function load(){try{let d=JSON.parse(localStorage.getItem(KEY));if(d?.v===5&&d.world?.teams&&d.world?.players){s=d;correctRealAges(s.world,s.year);fixFameOnLoad(s.world);s.transferLog??=[];s.contractPending??=false;s.negotiation??=null;s.asianSelections??={};s.asianResults??={};recoverAsianGoldMedalists();s.militaryStatus??=(s.military?"복무 완료":s.exempt?"병역특례":"미필");for(const ai of Object.values(s.world.players))if(!ai.player&&ai.bestOverall==null)ai.bestOverall=avg(ai.stats);normalizeAllRosters();save();return true}}catch(e){console.warn(e)}return false}
 function reset(){if(confirm('모든 V5 저장 데이터를 지우고 새 게임을 시작할까요?')){localStorage.removeItem(KEY);s=null;tab='home';header();startOptions();}}
