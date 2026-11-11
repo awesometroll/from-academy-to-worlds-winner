@@ -1411,7 +1411,7 @@ function events(){
    let head='';if(lastYear!==g.year){head=`<h3 class="archive-year">📅 ${g.year} 시즌</h3>`;lastYear=g.year}
    const selected=g.key===archiveCompetitionKey;
    const allStages=g.splits.flatMap(x=>x.stages);
-   const win=[...allStages].reverse().find(e=>e.winner&&/플레이오프|녹아웃|결승|Cup \(간소화\)|EWC|Demacia/.test(e.name));
+   const win=[...allStages].reverse().find(e=>e.winner&&!/(Road to MSI|로투엠|플레이인)/i.test(e.name||'')&&/플레이오프|녹아웃|결승|Cup \(간소화\)|EWC|Demacia/.test(e.name));
    const split=g.splits[Math.min(Math.max(0,archiveSplitIndex),g.splits.length-1)];
    const stage=split?.stages[Math.min(Math.max(0,archiveStageIndex),split.stages.length-1)];
    const splitButtons=g.splits.length>1?`<div class="archive-split-buttons" role="group" aria-label="${esc(g.title)} 스플릿 선택">${g.splits.map((x,j)=>`<button type="button" class="${archiveSplitIndex===j?'on':''}" aria-pressed="${archiveSplitIndex===j}" onclick="selectArchiveSplit(${j})">${esc(x.name)}</button>`).join('')}</div>`:'';
