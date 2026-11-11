@@ -1312,24 +1312,24 @@ function showProfile(pid){let p=s.world.players[pid];if(!p)return;let chart=p.hi
 let archiveCompetitionKey='',archiveStageIndex=0,archiveSplitIndex=0;
 function competitionIdentity(e){
  const n=String(e.name||'').trim();
- if(/^LCK Cup\\b/i.test(n))return 'LCK CUP';
- if(/^KeSPA Cup\\b/i.test(n))return '케스파컵';
- if(/^Demacia Cup\\b/i.test(n))return 'Demacia Cup';
- if(/^EWC\\b/i.test(n))return 'EWC';
- if(/^WSCI\\b/i.test(n)||/^WSCI 본선/.test(n))return 'WSCI';
- if(/^Asia Masters\\b/i.test(n))return 'AM';
- if(/^First Stand\\b/i.test(n))return 'FST';
- if(/^MSI(?:\\b|\\s)/i.test(n))return 'MSI';
- if(/^Worlds\\b/i.test(n))return 'WORLDS';
- if(/^LEC Versus\\b/i.test(n))return 'LEC Versus';
+ if(/^LCK Cup\b/i.test(n))return 'LCK CUP';
+ if(/^KeSPA Cup\b/i.test(n))return '케스파컵';
+ if(/^Demacia Cup\b/i.test(n))return 'Demacia Cup';
+ if(/^EWC\b/i.test(n))return 'EWC';
+ if(/^WSCI\b/i.test(n)||/^WSCI 본선/.test(n))return 'WSCI';
+ if(/^Asia Masters\b/i.test(n))return 'AM';
+ if(/^First Stand\b/i.test(n))return 'FST';
+ if(/^MSI(?:\b|\\s)/i.test(n))return 'MSI';
+ if(/^Worlds\b/i.test(n))return 'WORLDS';
+ if(/^LEC Versus\b/i.test(n))return 'LEC';
  if(/^LCK (?:Road to MSI|시즌|정규|레전드|라이즈|1~2)/i.test(n))return 'LCK';
- if(/^LCK CL\\b/.test(n))return 'LCK CL';
- if(/^ACADEMY\\b|^아카데미/.test(n))return 'LCK AS';
+ if(/^LCK CL\b/.test(n))return 'LCK CL';
+ if(/^ACADEMY\b|^아카데미/.test(n))return 'LCK AS';
  if(/^아시안게임 국가대표 결과/.test(n)||/^아시안게임/.test(n))return '아시안게임';
  if(/^LCS Lock-In/i.test(n)||/^LCS 시즌 개막/i.test(n))return 'LCS';
  if(/^CBLOL Cup/i.test(n)||/^CBLOL 시즌 개막/i.test(n))return 'CBLOL';
  if(/^LCP Split 1/i.test(n)||/^LCP 시즌 개막/i.test(n))return 'LCP';
- const split=n.match(/^(LPL Split [123])\\b/i);if(split)return 'LPL';
+ const split=n.match(/^(LPL Split [123])\b/i);if(split)return 'LPL';
  const phase=n.match(/^(LCK|LCP|LCS|LPL|CBLOL|LEC) (상반기|하반기) (정규시즌|플레이오프)/);if(phase)return phase[1];
  return n.replace(/ (그룹 대항전|[AB]조 그룹 스테이지|그룹 스테이지|스위스 스테이지|녹아웃 스테이지|플레이인|플레이오프|정규시즌|결승|진출팀 검증)$/,'');
 }
