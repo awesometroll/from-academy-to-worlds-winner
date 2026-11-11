@@ -1738,7 +1738,7 @@ function pomArchiveHTML(){
  }
  const list=Object.values(groups).filter(g=>Object.keys(g.counts).length).sort((a,b)=>b.year-a.year||a.name.localeCompare(b.name,'ko'));
  if(!list.length)return '<h3>🏅 대회별 POM 기록</h3><p class="muted">대회 종료 후 POM 기록이 저장됩니다. MSI와 월즈는 집계하지 않습니다.</p>';
- return '<h3>🏅 대회별 POM 기록</h3>'+list.map(g=>{const a=Object.values(g.counts).sort((x,y)=>y.count-x.count||x.name.localeCompare(y.name));const top=a[0].count;return '<div class="notice"><b>'+esc(g.year)+'년 · '+esc(g.name)+'</b><div class="scroll"><table><tr><th>순위</th><th>선수</th><th>팀</th><th>POM</th></tr>'+a.map((p,i)=>'<tr><td>'+(p.count===top?'공동 1위':i+1)+'</td><td>'+esc(p.name)+'</td><td>'+esc(p.team)+'</td><td>'+p.count+'회</td></tr>').join('')+'</table></div></div>'}).join('');
+ return '<h3>🏅 대회별 POM 기록</h3>'+list.map(g=>{const a=Object.values(g.counts).sort((x,y)=>y.count-x.count||x.name.localeCompare(y.name));const top=a[0].count,tied=a.filter(p=>p.count===top).length>1;return '<div class="notice"><b>'+esc(g.year)+'년 · '+esc(g.name)+'</b><div class="scroll"><table><tr><th>순위</th><th>선수</th><th>팀</th><th>POM</th></tr>'+a.map((p,i)=>'<tr><td>'+(p.count===top?(tied?'공동 1위':'1위'):i+1)+'</td><td>'+esc(p.name)+'</td><td>'+esc(p.team)+'</td><td>'+p.count+'회</td></tr>').join('')+'</table></div></div>'}).join('');
 }
 const _recordsBeforePOM=records;
 records=function(){let html=_recordsBeforePOM();return html.replace('</section>',pomArchiveHTML()+'</section>')};
