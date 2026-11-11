@@ -1416,10 +1416,10 @@ function events(){
    const stage=split?.stages[Math.min(Math.max(0,archiveStageIndex),split.stages.length-1)];
    const splitButtons=g.splits.length>1?`<div class="archive-split-buttons" role="group" aria-label="${esc(g.title)} 스플릿 선택">${g.splits.map((x,j)=>`<button type="button" class="${archiveSplitIndex===j?'on':''}" aria-pressed="${archiveSplitIndex===j}" onclick="selectArchiveSplit(${j})">${esc(x.name)}</button>`).join('')}</div>`:'';
    const stageButtons=split?`<div class="archive-stage-buttons" role="group" aria-label="${esc(g.title)} 단계 선택">${split.stages.map((e,j)=>`<button type="button" class="${archiveStageIndex===j?'on':''}" aria-pressed="${archiveStageIndex===j}" onclick="selectArchiveStage(${j})">${esc(competitionStageLabel(e))}</button>`).join('')}</div>`:'';
-   const pomSelected=window.pomOpenKey===g.key;
-   return head+`<div style="display:flex;gap:7px;align-items:stretch"><button type="button" class="archive-comp ${selected?'chosen':''}" style="flex:1;min-width:0" aria-expanded="${selected}" onclick="selectArchiveCompetition(${i})"><span><b>🏆 ${esc(g.title)}</b><small>${g.splits.length>1?g.splits.length+'개 스플릿 · ':''}${allStages.length}개 단계${win?' · 우승 '+esc(win.winner):''}</small></span><strong>${selected?'접기 ▲':'기록 보기 ▼'}</strong></button><button type="button" class="archive-comp" style="white-space:nowrap;flex:0 0 auto" aria-expanded="${pomSelected}" onclick="togglePomArchive(${i})">${pomSelected?'POM 접기 ▲':'🏅 POM 순위'}</button></div>`+(selected?`<div class="archive-inner">${splitButtons}${stageButtons}<div class="archive-stage-detail">${stage?eventDetail(stage):'<p>기록 없음</p>'}</div></div>`:'')+(pomSelected?`<div class="archive-inner">${pomArchiveHTMLForGroup(g)}</div>`:'');
+   return head+`<button type="button" class="archive-comp ${selected?'chosen':''}" style="width:100%" aria-expanded="${selected}" onclick="selectArchiveCompetition(${i})"><span><b>🏆 ${esc(g.title)}</b><small>${g.splits.length>1?g.splits.length+'개 스플릿 · ':''}${allStages.length}개 단계${win?' · 우승 '+esc(win.winner):''}</small></span><strong>${selected?'접기 ▲':'기록 보기 ▼'}</strong></button>`+(selected?`<div class="archive-inner">${splitButtons}${stageButtons}<div class="archive-stage-detail">${stage?eventDetail(stage):'<p>기록 없음</p>'}</div></div>`:'');
  }).join('');
- return `<section class="card"><h2>🏆 대회 기록</h2><p class="muted">리그를 선택한 다음 스플릿과 대회 단계를 버튼으로 선택하세요. 국제대회와 별도 컵대회는 따로 표시됩니다.</p><div class="archive-list">${list}</div></section>`;
+ const pomOpen=!!window.pomArchiveOpen;
+ return `<section class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2>🏆 대회 기록</h2><button type="button" class="archive-comp" style="width:auto" aria-expanded="${pomOpen}" onclick="togglePomArchiveAll()">🏅 POM 전체 순위 ${pomOpen?'접기 ▲':'보기 ▼'}</button></div><p class="muted">리그를 선택한 다음 스플릿과 대회 단계를 버튼으로 선택하세요. POM 전체 순위는 별도 버튼에서 확인할 수 있습니다.</p><div class="archive-list">${list}</div>${pomOpen?`<div class="archive-inner">${pomArchiveAllHTML()}</div>`:''}</section>`;
 }
 function bracketCard(m){
  if(!m)return '<div class="bracket-bye">대진 미정</div>';
@@ -1759,6 +1759,12 @@ function pomCareerHTML(){
  );
 }
 window.pomOpenKey=window.pomOpenKey||'';
+function togglePomArchiveAll(){window.pomArchiveOpen=!window.pomArchiveOpen;render()}
+function pomArchiveAllHTML(){
+ const groups=archiveGroups();
+ if(!groups.length)return '<p class="muted">대회 기록이 없습니다.</p>';
+ return groups.map(g=>pomArchiveHTMLForGroup(g)).join('');
+}
 function togglePomArchive(index){const g=archiveGroups()[index];if(!g)return;window.pomOpenKey=window.pomOpenKey===g.key?'':g.key;render()}
 function pomArchiveHTMLForGroup(group){
  const counts={};
