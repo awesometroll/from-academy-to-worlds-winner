@@ -1500,7 +1500,7 @@ function eventDetail(e){let info='';
  if(e.kind==='cupgroup'&&e.groups?.['바론'])info+=groupStandingTables(e);
  if(e.kind==='lplgroup'&&e.groups)info+=lplGroupTables(e);
  else if(e.kind==='cupgroup'&&e.groups?.A){info+='<h3>그룹별 순위표</h3>'+['A','B'].map(g=>'<h3>'+g+'조</h3><div class="scroll"><table><tr><th>순위</th><th>팀</th><th>승</th><th>패</th></tr>'+e.standings.filter(t=>t.group===g).map(t=>'<tr><td>'+t.rank+'</td><td>'+esc(t.name)+'</td><td>'+t.w+'</td><td>'+t.l+'</td></tr>').join('')+'</table></div>').join('');}
- else if(e.standings?.length&&!e.groups?.legend)info+=`<h3>정규시즌 순위표</h3><div class="scroll"><table><tr><th>순위</th><th>팀</th><th>승</th><th>패</th><th>세트 득실</th></tr>${e.standings.map(x=>`<tr class="${x.name===me().team?'selected':''}"><td>${x.rank}</td><td>${esc(x.name)}</td><td>${x.w}</td><td>${x.l}</td><td>${x.sets>0?'+':''}${x.sets??0}</td></tr>`).join('')}</table></div>`;
+ else if(e.standings?.length&&!e.groups?.legend&&!( /아카데미|ACADEMY/i.test(e.name||'')&&/플레이오프/.test(e.name||'') ))info+=`<h3>정규시즌 순위표</h3><div class="scroll"><table><tr><th>순위</th><th>팀</th><th>승</th><th>패</th><th>세트 득실</th></tr>${e.standings.map(x=>`<tr class="${x.name===me().team?'selected':''}"><td>${x.rank}</td><td>${esc(x.name)}</td><td>${x.w}</td><td>${x.l}</td><td>${x.sets>0?'+':''}${x.sets??0}</td></tr>`).join('')}</table></div>`;
  if(e.groups?.legend)info+=lckGroupTables(e);
  if(e.swiss)info+=`<h3>스위스 최종 전적</h3><div class="scroll"><table>${e.swiss.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.w}승 ${x.l}패</td><td>${e.qualified.includes(x.name)?'8강 진출':'탈락'}</td></tr>`).join('')}</table></div>`;
  if(e.qualified)info+=`<p>✅ 진출팀: ${e.qualified.map(esc).join(' · ')}</p>`;
