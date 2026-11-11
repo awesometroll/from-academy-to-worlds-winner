@@ -400,7 +400,7 @@ function logMove(type,p,from,to,extra=''){
 }
 function releaseFromTeam(p,reason){
  let t=s.world.teams[p.team];if(!t)return;
- t.players=t.players.filter(id=>id!==p.id);p.lastLeague=p.academyLeague||p.league;p.team='FA';p.league='FA';p.freeAgent=true;p.unattachedYears=0;
+ t.players=t.players.filter(id=>id!==p.id);p.lastTeamLeague=t.league;p.lastAcademySourceLeague=t.league==='ACADEMY'?(t.sourceLeague||p.academyLeague||academyLeagueOf(t)):null;p.lastLeague=p.academyLeague||p.league;p.team='FA';p.league='FA';p.freeAgent=true;p.unattachedYears=0;
  logMove('방출',p,t.name,'FA',reason||'로스터 정리');
 }
 // Game-specific eligibility: LCK and LCK CL roster registration requires age >=18.
@@ -495,7 +495,7 @@ function fillVacancy(t,pos,reason){
  fillingVacancies.add(key);
  try{
   // Re-sign unattached players before removing an active lower-division player.
-  let pool=Object.values(s.world.players).filter(p=>!p.retired&&!p.player&&p.pos===pos&&p.team==='FA'&&eligibleForTeam(p,t)&&(p.league!=='ACADEMY'||academyLeagueOf(p)===academyLeagueOf(t)));
+  let pool=Object.values(s.world.players).filter(p=>!p.retired&&!p.player&&p.pos===pos&&p.team==='FA'&&eligibleForTeam(p,t)&&sameRestrictedMarket(p,t)&&(p.league!=='ACADEMY'||academyLeagueOf(p)===academyLeagueOf(t)));
   // Never insert a rookie generated in the current year directly into CL/first tier.
   pool=pool.filter(p=>!p.generated||p.academyDebutYear<s.year);
   pool.sort((a,b)=>avg(b.stats)-avg(a.stats));
@@ -554,6 +554,10 @@ function normalizeRoster(t){
 }
 function normalizeAllRosters(){for(const t of Object.values(s.world.teams))if(!t.hidden)normalizeRoster(t)}
 function canJoinTeam(t,pos){return activePlayers(t).some(p=>p.pos===pos&&!p.player)}
+function restrictedMarketLeague(team){if(!team)return null;if(team.league==='LCK CL')return 'LCK CL';if(team.league==='ACADEMY'&&(team.sourceLeague||academyLeagueOf(team))==='LCK')return 'LCK AS';return null}
+function playerRestrictedMarketLeague(p){if(!p)return null;const team=s.world.teams[p.team];if(team)return restrictedMarketLeague(team);if(p.lastTeamLeague==='LCK CL')return 'LCK CL';if(p.lastTeamLeague==='ACADEMY'&&p.lastAcademySourceLeague==='LCK')return 'LCK AS';if(p.lastLeague==='LCK CL')return 'LCK CL';if(p.lastLeague==='LCK'&&p.academyLeague==='LCK')return 'LCK AS';return null}
+function sameRestrictedMarket(p,team){const source=playerRestrictedMarketLeague(p),target=restrictedMarketLeague(team);return !source&&!target||!!source&&source===target}
+
 function sensibleReplacement(p,victim){
  if(!victim)return true;
  let gap=avg(p.stats)-avg(victim.stats);
@@ -564,7 +568,7 @@ function sensibleReplacement(p,victim){
 }
 function transferPlayer(p,to,why){
  // 계약 기간이 남은 AI 선수는 이적 불가. 계약 만료 후 FA가 된 경우에만 이동 가능.
- if(!p||p.player||p.retired||!to||p.team===to.id||!eligibleForTeam(p,to))return false;
+ if(!p||p.player||p.retired||!to||p.team===to.id||!eligibleForTeam(p,to)||!sameRestrictedMarket(p,to))return false;
  if(p.league==='ACADEMY'&&(to.league==='ACADEMY'||academyLeagueOf(to)!==academyLeagueOf(p)))return false;
  if(Number(p.contractUntil)>s.year)return false;
  let from=s.world.teams[p.team];if(!from||!canJoinTeam(to,p.pos))return false;
@@ -621,7 +625,7 @@ function offseason(){
  let all=Object.values(s.world.players).filter(p=>!p.player&&!p.retired&&p.team!=='FA').sort(()=>Math.random()-.5);
  for(const p of all){
   if(Math.random()>=.085)continue;
-  let same=Object.values(s.world.teams).filter(t=>(!p.contractUntil||p.contractUntil<=s.year)&&t.id!==p.team&&canJoinTeam(t,p.pos)&&eligibleForTeam(p,t)&&recruitFit(t,p)>=.075&&leagueTransferWeight(t,p)>.04&&sensibleReplacement(p,activePlayers(t).find(x=>x.pos===p.pos&&!x.player)));
+  let same=Object.values(s.world.teams).filter(t=>(!p.contractUntil||p.contractUntil<=s.year)&&t.id!==p.team&&canJoinTeam(t,p.pos)&&eligibleForTeam(p,t)&&sameRestrictedMarket(p,t)&&recruitFit(t,p)>=.075&&leagueTransferWeight(t,p)>.04&&sensibleReplacement(p,activePlayers(t).find(x=>x.pos===p.pos&&!x.player)));
   if(!same.length)continue;
   let from=teamOf(p),to=weightedPick(same,t=>recruitFit(t,p)*Math.max(.1,teamRecruitReputation(t)/70));
   if(transferPlayer(p,to,'구단 명성·선수 오버롤·선수 명성 매칭')){moves++;if(moves<18&&shouldShowTransferNews(p,from,to))news(`🔄 ${p.name}: ${from.name} → ${to.name} 이적`)}
@@ -1271,6 +1275,7 @@ function createOffers(){
  if(s.offersGeneratedForYear===s.year&&s.contractPending&&Array.isArray(s.offers))return;
  let p=me(),current=teamOf(p);
  let candidates=Object.values(s.world.teams).filter(t=>t.id!==current.id)
+ .filter(t=>sameRestrictedMarket(p,t))
  .filter(t=>p.league!=='ACADEMY'||(t.league!=='ACADEMY'&&academyLeagueOf(t)===academyLeagueOf(p)))
  .filter(t=>eligibleForTeam(p,t)&&recruitFit(t,p)>=.055&&activePlayers(t).some(x=>x.pos===p.pos&&!x.player))
  .map(t=>({t,weight:offerSuitability(t,p)})).filter(x=>x.weight>.003);
@@ -1288,7 +1293,7 @@ function createOffers(){
 function acceptOffer(i){
  let offer=s.offers?.[i];if(!offer)return;
  if(Number(s.contract)>0||!s.contractPending){alert('현재 계약이 남아 있어 이적할 수 없습니다. 계약 만료 후 FA 상태에서만 이적할 수 있습니다.');return;}
- let p=me(),old=teamOf(p),dest=s.world.teams[offer.team];if(!dest)return;
+ let p=me(),old=teamOf(p),dest=s.world.teams[offer.team];if(!dest)return;if(!sameRestrictedMarket(p,dest)){alert('LCK CL과 LCK AS 선수는 각각 같은 리그 내에서만 FA 영입 및 이적이 가능합니다.');return;}
  if(p.league==='ACADEMY'&&(dest.league==='ACADEMY'||academyLeagueOf(dest)!==academyLeagueOf(p))){alert('아카데미 선수는 소속 리그 1군으로만 콜업될 수 있습니다.');return;}
  if(!eligibleForTeam(p,dest)){alert('이 팀은 출전 등록 나이 제한으로 지금은 이적할 수 없습니다.');return;}
  if(recruitFit(dest,p)<.055){alert('현재 선수 가치와 구단의 영입 기준이 맞지 않습니다.');return;}
