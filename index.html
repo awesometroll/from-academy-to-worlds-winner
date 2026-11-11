@@ -1313,7 +1313,7 @@ function monthlyResultsHTML(ms){
  const comments=getMonthComments(periodSummary);
  const events=[...new Map(ms.flatMap(m=>m.events.map(e=>{
   const title=monthlyCompetitionIdentity(e);
-  return [title,{title,month:`${m.year}년 ${m.month}월`,winner:e.winner}];
+  return {title,month:`${m.year}년 ${m.month}월`,winner:e.winner};
  })).map(e=>[e.title,e])).values()];
  return `<h2>📅 ${labels[0]} ~ ${labels[labels.length-1]} 결산</h2><div class="stats"><div class="stat">출전 경기<b>${games}</b></div><div class="stat">승리<b>${wins}</b></div><div class="stat">경기 평점<b>${games?rating.toFixed(2):'미출전'}</b></div><div class="stat">총 수입<b>${income.toFixed(1)}만 원</b></div></div>
  <section class="card"><h3>📈 능력치 증가</h3><p class="muted">${ms.length}개월간의 시작 능력치와 최종 능력치 비교</p><div class="scroll"><table><tr><th>능력치</th><th>시작</th><th>현재</th><th>${ms.length}개월 변화</th></tr>${ATTR.map((a,i)=>{const d=now[i]-old[i];return `<tr><td>${a}</td><td>${old[i].toFixed(2)}</td><td>${now[i].toFixed(2)}</td><td class="${d>=0?'good':'bad'}">${d>=0?'+':''}${d.toFixed(2)}</td></tr>`}).join('')}</table></div></section>
