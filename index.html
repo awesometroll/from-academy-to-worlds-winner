@@ -1769,9 +1769,8 @@ function pomArchiveHTMLForGroup(group){
  const a=Object.values(counts).sort((x,y)=>y.count-x.count||x.name.localeCompare(y.name,'ko'));
  if(!a.length)return '<h3>🏅 POM 순위</h3><p class="muted">집계된 POM 기록이 없습니다.</p>';
  const mine=me(),top=a[0].count;
- const rows=a.map((p,i)=>({...p,rank:i>0&&p.count===a[i-1].count?null:i+1}));
- const shown=rows.filter((p,i)=>p.rank===null?rows.slice(0,i).reverse().find(x=>x.rank!==null)?.rank<=7:p.rank<=7);
- return '<h3>🏅 POM 순위 TOP 7</h3><div class="scroll"><table><tr><th>순위</th><th>선수</th><th>팀</th><th>POM</th></tr>'+shown.map(p=>'<tr class="'+(p.id===mine.id?'selected':'')+'"><td>'+(p.count===top?(a.filter(x=>x.count===top).length>1?'공동 1위':'1위'):p.rank+'위')+'</td><td>'+esc(p.name)+(p.id===mine.id?' ★':'')+'</td><td>'+esc(p.team)+'</td><td>'+p.count+'회</td></tr>').join('')+'</table></div>';
+ const shown=a.slice(0,7);
+ return '<h3>🏅 POM 순위 TOP 7</h3><div class="scroll"><table><tr><th>순위</th><th>선수</th><th>팀</th><th>POM</th></tr>'+shown.map((p,i)=>{const first=a.findIndex(x=>x.count===p.count),tied=a.filter(x=>x.count===p.count).length>1;return '<tr class="'+(p.id===mine.id?'selected':'')+'"><td>'+(tied?'공동 '+(first+1)+'위':(i+1)+'위')+'</td><td>'+esc(p.name)+(p.id===mine.id?' ★':'')+'</td><td>'+esc(p.team)+'</td><td>'+p.count+'회</td></tr>'}).join('')+'</table></div>';
 }
 const _recordsBeforePOM=records;
 records=function(){let html=_recordsBeforePOM();return html.replace('</section>',pomCareerHTML()+'</section>')};
