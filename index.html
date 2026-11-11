@@ -428,13 +428,13 @@ function recruitFit(t,p){
 // All newly generated players originate in an academy roster, never directly in CL/first tier.
 function academyLeagueOf(pOrTeam){
  const value=pOrTeam||{};
- if(value.league&&value.league!=='ACADEMY')return value.league;
- if(value.sourceLeague)return value.sourceLeague;
  if(value.academyLeague)return value.academyLeague;
+ if(value.sourceLeague)return value.sourceLeague;
+ if(value.league&&value.league!=='ACADEMY'&&value.league!=='FA')return value.league==='LCK CL'?'LCK':value.league;
  const teamId=value.team||value.id;
  const chain=FARM_CLUBS.find(c=>c.includes(teamId));
  const upper=chain&&s.world.teams[chain[chain.length-1]];
- return upper?.league||'LCK';
+ return upper?.league||value.lastLeague||'LCK';
 }
 function academyPool(league){
  const poolId=`__${league}_ACADEMY_POOL__`;
