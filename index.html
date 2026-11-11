@@ -1406,30 +1406,38 @@ function selectArchiveCompetition(index){
 }
 function selectArchiveSplit(index){archiveSplitIndex=index;archiveStageIndex=0;render()}
 function selectArchiveStage(index){archiveStageIndex=index;render()}
+function selectArchiveCategory(category){
+ window.archiveCategory=category;
+ window.archiveTier=category==='기타'?'':(window.archiveTier||'1부');
+ archiveCompetitionKey='';
+ archiveSplitIndex=0;archiveStageIndex=0;
+ render();
+}
+function selectArchiveTier(tier){
+ window.archiveTier=tier;
+ archiveCompetitionKey='';
+ archiveSplitIndex=0;archiveStageIndex=0;
+ render();
+}
 function events(){
  const groups=archiveGroups();
- if(!groups.length)return '<section class="card"><h2>🏆 대회 기록</h2><p class="muted">아직 종료된 대회가 없습니다. 월을 진행하세요.</p></section>';
- const categories=['국제전','리그','기타'];
- const list=categories.map(category=>{
-  const subset=groups.filter(g=>g.category===category);
-  if(!subset.length)return '';
-  const tiers=category==='기타'?['']:['1부','챌린저스'];
-  return `<section class="archive-category"><h3 class="archive-category-title">${category}</h3>${tiers.map(tier=>{
-   const items=subset.filter(g=>g.tier===tier);
-   if(!items.length)return '';
-   return `${tier?`<h4 class="archive-tier-title">${tier}</h4>`:''}<div class="archive-list">${items.map((g,i)=>{
-    const selected=g.key===archiveCompetitionKey;
-    const split=g.splits[Math.min(Math.max(0,archiveSplitIndex),g.splits.length-1)];
-    const stage=split?.stages[Math.min(Math.max(0,archiveStageIndex),split.stages.length-1)];
-    const splitButtons=g.splits.length>1?`<div class="archive-split-buttons" role="group" aria-label="${esc(g.title)} 스플릿 선택">${g.splits.map((x,j)=>`<button type="button" class="${archiveSplitIndex===j?'on':''}" aria-pressed="${archiveSplitIndex===j}" onclick="selectArchiveSplit(${j})">${esc(x.name)}</button>`).join('')}</div>`:'';
-    const pomKey=split?g.key+'::'+split.name:'';
-    const pomSelected=!!pomKey&&window.pomOpenKey===pomKey;
-    const stageButtons=split?`<div class="archive-stage-row"><div class="archive-stage-buttons" role="group" aria-label="${esc(g.title)} 단계 선택">${split.stages.map((e,j)=>`<button type="button" class="${archiveStageIndex===j?'on':''}" aria-pressed="${archiveStageIndex===j}" onclick="selectArchiveStage(${j})">${esc(competitionStageLabel(e))}</button>`).join('')}</div><button type="button" class="archive-pom-button" aria-expanded="${pomSelected}" aria-controls="pom-archive-${i}" onclick="togglePomArchiveSplit(${archiveGroups().indexOf(g)},${g.splits.indexOf(split)})">🏅 POM 순위 <span>${pomSelected?'접기 ▲':'보기 ▼'}</span></button></div>`:'';
-    return `<button type="button" class="archive-comp ${selected?'chosen':''}" style="width:100%" aria-expanded="${selected}" onclick="selectArchiveCompetition(${archiveGroups().indexOf(g)})"><span><b>🏆 ${esc(g.title)}</b><small>${g.year}년</small></span><strong>${selected?'접기 ▲':'기록 보기 ▼'}</strong></button>`+(selected?`<div class="archive-inner">${splitButtons}${stageButtons}${pomSelected?`<div class="archive-inner">${pomArchiveHTMLForSplit(split)}</div>`:''}<div class="archive-stage-detail">${stage?eventDetail(stage):'<p>기록 없음</p>'}</div></div>`:'');
-   }).join('')}</div>`;
-  }).join('')}</section>`;
- }).join('');
- return `<section class="card"><h2>🏆 대회 기록</h2><p class="muted">국제전·리그·기타 대회를 구분해 확인할 수 있습니다.</p>${list}</section>`;
+ window.archiveCategory??='국제전';
+ window.archiveTier??='1부';
+ const category=window.archiveCategory;
+ const tiers=category==='기타'?[]:['1부','챌린저스'];
+ const subset=groups.filter(g=>g.category===category&&(category==='기타'||g.tier===window.archiveTier));
+ const list=subset.length?'<div class="archive-list">'+subset.map(g=>{
+   const groupIndex=groups.findIndex(x=>x.key===g.key);
+   const selected=g.key===archiveCompetitionKey;
+   const split=g.splits[Math.min(Math.max(0,archiveSplitIndex),g.splits.length-1)];
+   const stage=split?.stages[Math.min(Math.max(0,archiveStageIndex),split.stages.length-1)];
+   const splitButtons=g.splits.length>1?`<div class="archive-split-buttons" role="group" aria-label="${esc(g.title)} 스플릿 선택">${g.splits.map((x,j)=>`<button type="button" class="${archiveSplitIndex===j?'on':''}" aria-pressed="${archiveSplitIndex===j}" onclick="selectArchiveSplit(${j})">${esc(x.name)}</button>`).join('')}</div>`:'';
+   const pomKey=split?g.key+'::'+split.name:'';
+   const pomSelected=!!pomKey&&window.pomOpenKey===pomKey;
+   const stageButtons=split?`<div class="archive-stage-row"><div class="archive-stage-buttons" role="group" aria-label="${esc(g.title)} 단계 선택">${split.stages.map((e,j)=>`<button type="button" class="${archiveStageIndex===j?'on':''}" aria-pressed="${archiveStageIndex===j}" onclick="selectArchiveStage(${j})">${esc(competitionStageLabel(e))}</button>`).join('')}</div><button type="button" class="archive-pom-button" aria-expanded="${pomSelected}" aria-controls="pom-archive-${groupIndex}" onclick="togglePomArchiveSplit(${groupIndex},${g.splits.indexOf(split)})">🏅 POM 순위 <span>${pomSelected?'접기 ▲':'보기 ▼'}</span></button></div>`:'';
+   return `<button type="button" class="archive-comp ${selected?'chosen':''}" style="width:100%" aria-expanded="${selected}" onclick="selectArchiveCompetition(${groupIndex})"><span><b>🏆 ${esc(g.title)}</b><small>${g.year}년</small></span><strong>${selected?'접기 ▲':'기록 보기 ▼'}</strong></button>`+(selected?`<div class="archive-inner">${splitButtons}${stageButtons}${pomSelected?`<div class="archive-inner">${pomArchiveHTMLForSplit(split)}</div>`:''}<div class="archive-stage-detail">${stage?eventDetail(stage):'<p>기록 없음</p>'}</div></div>`:'');
+ }).join('')+'</div>':'<p class="muted">해당 카테고리에 표시할 대회 기록이 없습니다.</p>';
+ return `<section class="card"><h2>🏆 대회 기록</h2><p class="muted">카테고리와 리그 구분을 선택해 대회 기록을 확인할 수 있습니다.</p><div class="round-switches archive-category-switches" role="group" aria-label="대회 기록 카테고리">${['국제전','리그','기타'].map(x=>`<button type="button" class="${category===x?'on':''}" aria-pressed="${category===x}" onclick="selectArchiveCategory('${x}')">${x}</button>`).join('')}</div>${tiers.length?`<div class="round-switches archive-tier-switches" role="group" aria-label="리그 구분">${tiers.map(x=>`<button type="button" class="${window.archiveTier===x?'on':''}" aria-pressed="${window.archiveTier===x}" onclick="selectArchiveTier('${x}')">${x}</button>`).join('')}</div>`:''}${list}</section>`;
 }
 function bracketCard(m){
  if(!m)return '<div class="bracket-bye">대진 미정</div>';
