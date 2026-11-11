@@ -554,9 +554,9 @@ function normalizeRoster(t){
 }
 function normalizeAllRosters(){for(const t of Object.values(s.world.teams))if(!t.hidden)normalizeRoster(t)}
 function canJoinTeam(t,pos){return activePlayers(t).some(p=>p.pos===pos&&!p.player)}
-function restrictedMarketLeague(team){if(!team)return null;if(team.league==='LCK CL')return 'LCK CL';if(team.league==='ACADEMY'&&(team.sourceLeague||academyLeagueOf(team))==='LCK')return 'LCK AS';return null}
-function playerRestrictedMarketLeague(p){if(!p)return null;const team=s.world.teams[p.team];if(team)return restrictedMarketLeague(team);if(p.lastTeamLeague==='LCK CL')return 'LCK CL';if(p.lastTeamLeague==='ACADEMY'&&p.lastAcademySourceLeague==='LCK')return 'LCK AS';if(p.lastLeague==='LCK CL')return 'LCK CL';if(p.lastLeague==='LCK'&&p.academyLeague==='LCK')return 'LCK AS';return null}
-function sameRestrictedMarket(p,team){const source=playerRestrictedMarketLeague(p),target=restrictedMarketLeague(team);return !source&&!target||!!source&&source===target}
+function restrictedMarketLeague(team){if(!team)return null;if(team.league==='LCK')return 'LCK';if(team.league==='LCK CL')return 'LCK CL';if(team.league==='ACADEMY'&&(team.sourceLeague||academyLeagueOf(team))==='LCK')return 'LCK AS';return null}
+function playerRestrictedMarketLeague(p){if(!p)return null;const team=s.world.teams[p.team];if(team)return restrictedMarketLeague(team);if(p.lastTeamLeague==='LCK')return 'LCK';if(p.lastTeamLeague==='LCK CL')return 'LCK CL';if(p.lastTeamLeague==='ACADEMY'&&p.lastAcademySourceLeague==='LCK')return 'LCK AS';if(p.lastLeague==='LCK CL')return 'LCK CL';if(p.lastLeague==='LCK'&&p.academyLeague==='LCK')return 'LCK AS';return null}
+function sameRestrictedMarket(p,team){const source=playerRestrictedMarketLeague(p),target=restrictedMarketLeague(team);if(!source&&!target)return true;if(!source||!target)return false;if(source===target)return true;return source==='LCK AS'&&target==='LCK CL'||source==='LCK CL'&&target==='LCK AS'||source==='LCK CL'&&target==='LCK'||source==='LCK'&&target==='LCK CL'}
 
 function sensibleReplacement(p,victim){
  if(!victim)return true;
