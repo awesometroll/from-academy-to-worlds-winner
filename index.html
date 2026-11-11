@@ -1415,11 +1415,12 @@ function events(){
    const split=g.splits[Math.min(Math.max(0,archiveSplitIndex),g.splits.length-1)];
    const stage=split?.stages[Math.min(Math.max(0,archiveStageIndex),split.stages.length-1)];
    const splitButtons=g.splits.length>1?`<div class="archive-split-buttons" role="group" aria-label="${esc(g.title)} 스플릿 선택">${g.splits.map((x,j)=>`<button type="button" class="${archiveSplitIndex===j?'on':''}" aria-pressed="${archiveSplitIndex===j}" onclick="selectArchiveSplit(${j})">${esc(x.name)}</button>`).join('')}</div>`:'';
-   const stageButtons=split?`<div class="archive-stage-buttons" role="group" aria-label="${esc(g.title)} 단계 선택">${split.stages.map((e,j)=>`<button type="button" class="${archiveStageIndex===j?'on':''}" aria-pressed="${archiveStageIndex===j}" onclick="selectArchiveStage(${j})">${esc(competitionStageLabel(e))}</button>`).join('')}</div>`:'';
-   return head+`<button type="button" class="archive-comp ${selected?'chosen':''}" style="width:100%" aria-expanded="${selected}" onclick="selectArchiveCompetition(${i})"><span><b>🏆 ${esc(g.title)}</b><small>${g.splits.length>1?g.splits.length+'개 스플릿 · ':''}${allStages.length}개 단계${win?' · 우승 '+esc(win.winner):''}</small></span><strong>${selected?'접기 ▲':'기록 보기 ▼'}</strong></button>`+(selected?`<div class="archive-inner">${splitButtons}${stageButtons}<div class="archive-stage-detail">${stage?eventDetail(stage):'<p>기록 없음</p>'}</div></div>`:'');
+   const pomKey=split?g.key+'::'+split.name:'';
+   const pomSelected=!!pomKey&&window.pomOpenKey===pomKey;
+   const stageButtons=split?`<div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap"><div class="archive-stage-buttons" role="group" aria-label="${esc(g.title)} 단계 선택">${split.stages.map((e,j)=>`<button type="button" class="${archiveStageIndex===j?'on':''}" aria-pressed="${archiveStageIndex===j}" onclick="selectArchiveStage(${j})">${esc(competitionStageLabel(e))}</button>`).join('')}</div><button type="button" class="archive-comp" style="width:auto;white-space:nowrap" aria-expanded="${pomSelected}" onclick="togglePomArchiveSplit(${i},${g.splits.indexOf(split)})">🏅 POM 순위 ${pomSelected?'접기 ▲':'보기 ▼'}</button></div>`:'';
+   return head+`<button type="button" class="archive-comp ${selected?'chosen':''}" style="width:100%" aria-expanded="${selected}" onclick="selectArchiveCompetition(${i})"><span><b>🏆 ${esc(g.title)}</b><small>${g.splits.length>1?g.splits.length+'개 스플릿 · ':''}${allStages.length}개 단계${win?' · 우승 '+esc(win.winner):''}</small></span><strong>${selected?'접기 ▲':'기록 보기 ▼'}</strong></button>`+(selected?`<div class="archive-inner">${splitButtons}${stageButtons}${pomSelected?`<div class="archive-inner">${pomArchiveHTMLForSplit(split)}</div>`:''}<div class="archive-stage-detail">${stage?eventDetail(stage):'<p>기록 없음</p>'}</div></div>`:'');
  }).join('');
- const pomOpen=!!window.pomArchiveOpen;
- return `<section class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2>🏆 대회 기록</h2><button type="button" class="archive-comp" style="width:auto" aria-expanded="${pomOpen}" onclick="togglePomArchiveAll()">🏅 POM 전체 순위 ${pomOpen?'접기 ▲':'보기 ▼'}</button></div><p class="muted">리그를 선택한 다음 스플릿과 대회 단계를 버튼으로 선택하세요. POM 전체 순위는 별도 버튼에서 확인할 수 있습니다.</p><div class="archive-list">${list}</div>${pomOpen?`<div class="archive-inner">${pomArchiveAllHTML()}</div>`:''}</section>`;
+ return `<section class="card"><h2>🏆 대회 기록</h2><p class="muted">리그를 선택한 다음 스플릿과 대회 단계를 선택하세요. POM 순위는 각 스플릿의 정규시즌·플레이오프 선택 버튼 옆에서 확인할 수 있습니다.</p><div class="archive-list">${list}</div></section>`;
 }
 function bracketCard(m){
  if(!m)return '<div class="bracket-bye">대진 미정</div>';
@@ -1766,6 +1767,22 @@ function pomArchiveAllHTML(){
  return groups.map(g=>pomArchiveHTMLForGroup(g)).join('');
 }
 function togglePomArchive(index){const g=archiveGroups()[index];if(!g)return;window.pomOpenKey=window.pomOpenKey===g.key?'':g.key;render()}
+function togglePomArchiveSplit(groupIndex,splitIndex){
+ const group=archiveGroups()[groupIndex],split=group?.splits[splitIndex];if(!group||!split)return;
+ const key=group.key+'::'+split.name;
+ window.pomOpenKey=window.pomOpenKey===key?'':key;render();
+}
+function pomArchiveHTMLForSplit(split){
+ const counts={};
+ for(const ev of split.stages){
+  const games=Array.isArray(ev.matches)?ev.matches:(ev.rounds||[]).flatMap(x=>x.games||[]);
+  for(const game of games){if(!game?.pom?.id)continue;const row=counts[game.pom.id]??={id:game.pom.id,name:game.pom.name,team:game.pom.team,count:0};row.count++}
+ }
+ const a=Object.values(counts).sort((x,y)=>y.count-x.count||x.name.localeCompare(y.name,'ko'));
+ if(!a.length)return '<h3>🏅 '+esc(split.name)+' POM 순위</h3><p class="muted">집계된 POM 기록이 없습니다.</p>';
+ const mine=me(),shown=a.slice(0,7);
+ return '<h3>🏅 '+esc(split.name)+' POM 순위 TOP 7</h3><div class="scroll"><table><tr><th>순위</th><th>선수</th><th>팀</th><th>POM</th></tr>'+shown.map((p,i)=>{const first=a.findIndex(x=>x.count===p.count),tied=a.filter(x=>x.count===p.count).length>1;return '<tr class="'+(p.id===mine.id?'selected':'')+'"><td>'+(tied?'공동 '+(first+1)+'위':(i+1)+'위')+'</td><td>'+esc(p.name)+(p.id===mine.id?' ★':'')+'</td><td>'+esc(p.team)+'</td><td>'+p.count+'회</td></tr>'}).join('')+'</table></div>';
+}
 function pomArchiveHTMLForGroup(group){
  const counts={};
  for(const ev of group.splits.flatMap(x=>x.stages)){
