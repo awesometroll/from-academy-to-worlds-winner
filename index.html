@@ -1416,7 +1416,8 @@ function events(){
    const stage=split?.stages[Math.min(Math.max(0,archiveStageIndex),split.stages.length-1)];
    const splitButtons=g.splits.length>1?`<div class="archive-split-buttons" role="group" aria-label="${esc(g.title)} 스플릿 선택">${g.splits.map((x,j)=>`<button type="button" class="${archiveSplitIndex===j?'on':''}" aria-pressed="${archiveSplitIndex===j}" onclick="selectArchiveSplit(${j})">${esc(x.name)}</button>`).join('')}</div>`:'';
    const stageButtons=split?`<div class="archive-stage-buttons" role="group" aria-label="${esc(g.title)} 단계 선택">${split.stages.map((e,j)=>`<button type="button" class="${archiveStageIndex===j?'on':''}" aria-pressed="${archiveStageIndex===j}" onclick="selectArchiveStage(${j})">${esc(competitionStageLabel(e))}</button>`).join('')}</div>`:'';
-   return head+`<button type="button" class="archive-comp ${selected?'chosen':''}" aria-expanded="${selected}" onclick="selectArchiveCompetition(${i})"><span><b>🏆 ${esc(g.title)}</b><small>${g.splits.length>1?g.splits.length+'개 스플릿 · ':''}${allStages.length}개 단계${win?' · 우승 '+esc(win.winner):''}</small></span><strong>${selected?'접기 ▲':'보기 ▼'}</strong></button>`+(selected?`<div class="archive-inner">${splitButtons}${stageButtons}<div class="archive-stage-detail">${stage?eventDetail(stage):'<p>기록 없음</p>'}</div></div>`:'');
+   const pomSelected=window.pomOpenKey===g.key;
+   return head+`<div style="display:flex;gap:7px;align-items:stretch"><button type="button" class="archive-comp ${selected?'chosen':''}" style="flex:1;min-width:0" aria-expanded="${selected}" onclick="selectArchiveCompetition(${i})"><span><b>🏆 ${esc(g.title)}</b><small>${g.splits.length>1?g.splits.length+'개 스플릿 · ':''}${allStages.length}개 단계${win?' · 우승 '+esc(win.winner):''}</small></span><strong>${selected?'접기 ▲':'기록 보기 ▼'}</strong></button><button type="button" class="archive-comp" style="white-space:nowrap;flex:0 0 auto" aria-expanded="${pomSelected}" onclick="togglePomArchive(${i})">${pomSelected?'POM 접기 ▲':'🏅 POM 순위'}</button></div>`+(selected?`<div class="archive-inner">${splitButtons}${stageButtons}<div class="archive-stage-detail">${stage?eventDetail(stage):'<p>기록 없음</p>'}</div></div>`:'')+(pomSelected?`<div class="archive-inner">${pomArchiveHTMLForGroup(g)}</div>`:'');
  }).join('');
  return `<section class="card"><h2>🏆 대회 기록</h2><p class="muted">리그를 선택한 다음 스플릿과 대회 단계를 버튼으로 선택하세요. 국제대회와 별도 컵대회는 따로 표시됩니다.</p><div class="archive-list">${list}</div></section>`;
 }
@@ -1757,23 +1758,24 @@ function pomCareerHTML(){
   '<p class="muted">아직 POM 대회 1위 기록이 없습니다.</p>'
  );
 }
-function pomArchiveHTML(){
- const list=pomCompetitionGroups().sort((a,b)=>b.year-a.year||a.name.localeCompare(b.name,'ko'));
- if(!list.length)return '<h3>🏅 대회별 POM 순위</h3><p class="muted">대회 기록이 쌓이면 대회별 POM 순위가 표시됩니다. MSI와 월즈는 집계하지 않습니다.</p>';
- return '<h3>🏅 대회별 POM 순위</h3>'+list.map(g=>{
-  const a=Object.values(g.counts).sort((x,y)=>y.count-x.count||x.name.localeCompare(y.name));
-  const top=a[0].count,tied=a.filter(p=>p.count===top).length>1;
-  return '<div class="notice"><b>'+esc(g.year)+'년 · '+esc(g.name)+'</b><div class="scroll"><table><tr><th>순위</th><th>선수</th><th>팀</th><th>POM</th></tr>'+a.map((p,i)=>'<tr><td>'+(p.count===top?(tied?'공동 1위':'1위'):i+1)+'</td><td>'+esc(p.name)+'</td><td>'+esc(p.team)+'</td><td>'+p.count+'회</td></tr>').join('')+'</table></div></div>';
- }).join('');
+window.pomOpenKey=window.pomOpenKey||'';
+function togglePomArchive(index){const g=archiveGroups()[index];if(!g)return;window.pomOpenKey=window.pomOpenKey===g.key?'':g.key;render()}
+function pomArchiveHTMLForGroup(group){
+ const counts={};
+ for(const ev of group.splits.flatMap(x=>x.stages)){
+  const games=Array.isArray(ev.matches)?ev.matches:(ev.rounds||[]).flatMap(x=>x.games||[]);
+  for(const game of games){if(!game?.pom?.id)continue;const row=counts[game.pom.id]??={id:game.pom.id,name:game.pom.name,team:game.pom.team,count:0};row.count++}
+ }
+ const a=Object.values(counts).sort((x,y)=>y.count-x.count||x.name.localeCompare(y.name,'ko'));
+ if(!a.length)return '<h3>🏅 POM 순위</h3><p class="muted">집계된 POM 기록이 없습니다.</p>';
+ const mine=me(),top=a[0].count;
+ const rows=a.map((p,i)=>({...p,rank:i>0&&p.count===a[i-1].count?null:i+1}));
+ const shown=rows.filter((p,i)=>p.rank===null?rows.slice(0,i).reverse().find(x=>x.rank!==null)?.rank<=7:p.rank<=7);
+ return '<h3>🏅 POM 순위 TOP 7</h3><div class="scroll"><table><tr><th>순위</th><th>선수</th><th>팀</th><th>POM</th></tr>'+shown.map(p=>'<tr class="'+(p.id===mine.id?'selected':'')+'"><td>'+(p.count===top?(a.filter(x=>x.count===top).length>1?'공동 1위':'1위'):p.rank+'위')+'</td><td>'+esc(p.name)+(p.id===mine.id?' ★':'')+'</td><td>'+esc(p.team)+'</td><td>'+p.count+'회</td></tr>').join('')+'</table></div>';
 }
 const _recordsBeforePOM=records;
 records=function(){let html=_recordsBeforePOM();return html.replace('</section>',pomCareerHTML()+'</section>')};
-const _eventsBeforePOM=events;
-window.showPomArchive=window.showPomArchive||false;
-function pomArchiveToggleHTML(){
- return '<div class="row" style="margin-top:16px;padding-top:12px;border-top:1px solid var(--line)"><button type="button" class="primary" aria-expanded="'+window.showPomArchive+'" onclick="window.showPomArchive=!window.showPomArchive;render()">'+(window.showPomArchive?'POM 순위표 닫기 ▲':'🏅 POM 전체 순위 보기 ▼')+'</button></div>'+(window.showPomArchive?'<div class="archive-inner">'+pomArchiveHTML()+'</div>':'');
-}
-events=function(){let html=_eventsBeforePOM();return html.replace('</section>',pomArchiveToggleHTML()+'</section>')};
+
 
 try { if(!load())startOptions();else render();header();var h=document.getElementById('launchHelp');if(h)h.textContent='게임 준비 완료 · 시작 버튼을 누르세요.'; } catch(e) { console.error('초기 화면 오류',e); s=null; try { startOptions(); header(); } catch(e2) { document.getElementById('app').innerHTML='<section class="card"><h2>게임을 시작할 수 없습니다</h2><p>브라우저 오류: '+String(e2.message)+'</p><button onclick="location.reload()">다시 시도</button></section>'; } }
 </script></body></html>
