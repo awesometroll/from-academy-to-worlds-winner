@@ -1769,7 +1769,11 @@ function pomArchiveHTML(){
 const _recordsBeforePOM=records;
 records=function(){let html=_recordsBeforePOM();return html.replace('</section>',pomCareerHTML()+'</section>')};
 const _eventsBeforePOM=events;
-events=function(){let html=_eventsBeforePOM();return html.replace('</section>',pomArchiveHTML()+'</section>')};
+window.showPomArchive=window.showPomArchive||false;
+function pomArchiveToggleHTML(){
+ return '<div class="row" style="margin-top:16px;padding-top:12px;border-top:1px solid var(--line)"><button type="button" class="primary" aria-expanded="'+window.showPomArchive+'" onclick="window.showPomArchive=!window.showPomArchive;render()">'+(window.showPomArchive?'POM 순위표 닫기 ▲':'🏅 POM 전체 순위 보기 ▼')+'</button></div>'+(window.showPomArchive?'<div class="archive-inner">'+pomArchiveHTML()+'</div>':'');
+}
+events=function(){let html=_eventsBeforePOM();return html.replace('</section>',pomArchiveToggleHTML()+'</section>')};
 
 try { if(!load())startOptions();else render();header();var h=document.getElementById('launchHelp');if(h)h.textContent='게임 준비 완료 · 시작 버튼을 누르세요.'; } catch(e) { console.error('초기 화면 오류',e); s=null; try { startOptions(); header(); } catch(e2) { document.getElementById('app').innerHTML='<section class="card"><h2>게임을 시작할 수 없습니다</h2><p>브라우저 오류: '+String(e2.message)+'</p><button onclick="location.reload()">다시 시도</button></section>'; } }
 </script></body></html>
