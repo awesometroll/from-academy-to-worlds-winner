@@ -1729,19 +1729,47 @@ simulateMatch=function(a,b,bo=3,important=false,matchContext={}){
  for(const teamName of [a,b])for(const pl of activeLineup(s.world.teams[teamName]))if(pl.player&&pl.type==='팀플레이 메이커'&&before[pl.id]!=null){const d=(Number(pl.trust)||58)-before[pl.id];pl.trust=clamp(before[pl.id]+d*(d>0?1.2:.8),0,100)}
  return result;
 };
-function pomCompetitionName(name){return String(name||'').split(' 플레이인').join('').trim()}
-function pomArchiveHTML(){
- const groups={};for(const ev of (s.tournaments||[])){const n=String(ev?.name||'');if(n.includes('MSI')||n.includes('미드 시즌 인비테이셔널')||n.toLowerCase().includes('worlds')||n.includes('월즈'))continue;
-  const key=String(ev.year)+'|'+pomCompetitionName(ev.name),g=groups[key]??={year:ev.year,name:pomCompetitionName(ev.name),counts:{}};
-  const matches=Array.isArray(ev.matches)?ev.matches:(ev.rounds||[]).flatMap(x=>x.games||[]);
-  for(const game of matches){if(!game?.pom?.id)continue;const id=game.pom.id,e=g.counts[id]??={name:game.pom.name,team:game.pom.team,count:0};e.count++}
+
+function pomCompetitionName(ev){return typeof competitionIdentity==='function'?competitionIdentity(ev):String(ev?.name||'').trim()}
+function pomCompetitionGroups(){
+ const groups={};
+ for(const ev of (s.tournaments||[])){
+  const n=String(ev?.name||'');
+  if(n.includes('MSI')||n.includes('미드 시즌 인비테이셔널')||n.toLowerCase().includes('worlds')||n.includes('월즈'))continue;
+  const title=pomCompetitionName(ev),key=String(ev.year)+'|'+title;
+  const g=groups[key]??={year:ev.year,name:title,counts:{}};
+  const games=Array.isArray(ev.matches)?ev.matches:(ev.rounds||[]).flatMap(x=>x.games||[]);
+  for(const game of games){
+   if(!game?.pom?.id)continue;
+   const id=game.pom.id,row=g.counts[id]??={id,name:game.pom.name,team:game.pom.team,count:0};
+   row.count++;
+  }
  }
- const list=Object.values(groups).filter(g=>Object.keys(g.counts).length).sort((a,b)=>b.year-a.year||a.name.localeCompare(b.name,'ko'));
- if(!list.length)return '<h3>🏅 대회별 POM 기록</h3><p class="muted">대회 종료 후 POM 기록이 저장됩니다. MSI와 월즈는 집계하지 않습니다.</p>';
- return '<h3>🏅 대회별 POM 기록</h3>'+list.map(g=>{const a=Object.values(g.counts).sort((x,y)=>y.count-x.count||x.name.localeCompare(y.name));const top=a[0].count,tied=a.filter(p=>p.count===top).length>1;return '<div class="notice"><b>'+esc(g.year)+'년 · '+esc(g.name)+'</b><div class="scroll"><table><tr><th>순위</th><th>선수</th><th>팀</th><th>POM</th></tr>'+a.map((p,i)=>'<tr><td>'+(p.count===top?(tied?'공동 1위':'1위'):i+1)+'</td><td>'+esc(p.name)+'</td><td>'+esc(p.team)+'</td><td>'+p.count+'회</td></tr>').join('')+'</table></div></div>'}).join('');
+ return Object.values(groups).filter(g=>Object.keys(g.counts).length);
+}
+function pomCareerHTML(){
+ const mine=me(),achievements=pomCompetitionGroups().filter(g=>{
+  const row=g.counts[mine.id];if(!row)return false;
+  return row.count===Math.max(...Object.values(g.counts).map(x=>x.count));
+ }).sort((a,b)=>b.year-a.year||a.name.localeCompare(b.name,'ko'));
+ return '<h3>🏅 POM 대회 1위 기록</h3>'+(
+  achievements.length?achievements.map(g=>'<span class="pill">'+esc(g.year)+'년 '+esc(g.name)+' · '+g.counts[mine.id].count+'회</span>').join(''):
+  '<p class="muted">아직 POM 대회 1위 기록이 없습니다.</p>'
+ );
+}
+function pomArchiveHTML(){
+ const list=pomCompetitionGroups().sort((a,b)=>b.year-a.year||a.name.localeCompare(b.name,'ko'));
+ if(!list.length)return '<h3>🏅 대회별 POM 순위</h3><p class="muted">대회 기록이 쌓이면 대회별 POM 순위가 표시됩니다. MSI와 월즈는 집계하지 않습니다.</p>';
+ return '<h3>🏅 대회별 POM 순위</h3>'+list.map(g=>{
+  const a=Object.values(g.counts).sort((x,y)=>y.count-x.count||x.name.localeCompare(y.name));
+  const top=a[0].count,tied=a.filter(p=>p.count===top).length>1;
+  return '<div class="notice"><b>'+esc(g.year)+'년 · '+esc(g.name)+'</b><div class="scroll"><table><tr><th>순위</th><th>선수</th><th>팀</th><th>POM</th></tr>'+a.map((p,i)=>'<tr><td>'+(p.count===top?(tied?'공동 1위':'1위'):i+1)+'</td><td>'+esc(p.name)+'</td><td>'+esc(p.team)+'</td><td>'+p.count+'회</td></tr>').join('')+'</table></div></div>';
+ }).join('');
 }
 const _recordsBeforePOM=records;
-records=function(){let html=_recordsBeforePOM();return html.replace('</section>',pomArchiveHTML()+'</section>')};
+records=function(){let html=_recordsBeforePOM();return html.replace('</section>',pomCareerHTML()+'</section>')};
+const _eventsBeforePOM=events;
+events=function(){let html=_eventsBeforePOM();return html.replace('</section>',pomArchiveHTML()+'</section>')};
 
 try { if(!load())startOptions();else render();header();var h=document.getElementById('launchHelp');if(h)h.textContent='게임 준비 완료 · 시작 버튼을 누르세요.'; } catch(e) { console.error('초기 화면 오류',e); s=null; try { startOptions(); header(); } catch(e2) { document.getElementById('app').innerHTML='<section class="card"><h2>게임을 시작할 수 없습니다</h2><p>브라우저 오류: '+String(e2.message)+'</p><button onclick="location.reload()">다시 시도</button></section>'; } }
 </script></body></html>
