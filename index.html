@@ -147,7 +147,7 @@ function makeWorld(){
  // 화면에 노출되지 않는 별도 리그 아카데미 풀을 만들고, 리그마다 루키 40명(포지션별 8명)을 둔다.
  for(const league of ['LPL','LEC','LCS','LCP','CBLOL']){
   const poolId=`__${league}_ACADEMY_POOL__`;
-  const pool={id:poolId,name:`${league} 리그 아카데미`,league:'ACADEMY',sourceLeague:league,hidden:true,players:[],staff:[],wins:0,losses:0,sets:0,prestige:25};
+  const pool={id:poolId,name:`${league} Academy`,league:'ACADEMY',sourceLeague:league,hidden:true,players:[],staff:[],wins:0,losses:0,sets:0,prestige:25};
   for(const pos of POS)for(let n=0;n<8;n++){
    let rookie=makePlayer(genRookieName(),pos,'ACADEMY',poolId,false,Math.floor(r(16,19)));
    rookie.placeholder=false;rookie.rookie=true;rookie.generated=true;rookie.academyOrigin=true;rookie.academyLeague=league;rookie.academyDebutYear=2026;
@@ -359,7 +359,7 @@ function createReplacementRookie(retiredPlayer,retiredFrom){
  const league=leagueForAcademyReplacement(retiredPlayer),poolId=`__${league}_ACADEMY_POOL__`;
  let pool=(retiredFrom&&!retiredFrom.hidden&&retiredFrom.league==='ACADEMY')?retiredFrom:s.world.teams[poolId];
  // LCK의 기존 공개 아카데미/챌린저스와 별개로, 은퇴 충원 인원을 보관할 비공개 예비 풀을 사용한다.
- if(!pool){pool={id:poolId,name:`${league} 리그 아카데미`,league:'ACADEMY',sourceLeague:league,hidden:true,players:[],staff:[],wins:0,losses:0,sets:0,prestige:25};s.world.teams[poolId]=pool;}
+ if(!pool){pool={id:poolId,name:`${league} Academy`,league:'ACADEMY',sourceLeague:league,hidden:true,players:[],staff:[],wins:0,losses:0,sets:0,prestige:25};s.world.teams[poolId]=pool;}
  const pos=retiredPlayer?.pos||pick(POS);
  const destinationId=pool.id;
  let rookie=makePlayer(genRookieName(),pos,'ACADEMY',destinationId,false,Math.floor(r(16,19)));
@@ -457,7 +457,8 @@ function academyLeagueOf(pOrTeam){
 function academyPool(league){
  const poolId=`__${league}_ACADEMY_POOL__`;
  let pool=s.world.teams[poolId];
- if(!pool){pool={id:poolId,name:`${league} 리그 아카데미`,league:'ACADEMY',sourceLeague:league,hidden:true,players:[],staff:[],wins:0,losses:0,sets:0,prestige:25};s.world.teams[poolId]=pool;}
+ if(!pool){pool={id:poolId,name:`${league} Academy`,league:'ACADEMY',sourceLeague:league,hidden:true,players:[],staff:[],wins:0,losses:0,sets:0,prestige:25};s.world.teams[poolId]=pool;}
+ pool.name=`${league} Academy`;pool.sourceLeague=league;
  return pool;
 }
 function ensureForeignAcademyPools(){
@@ -1604,7 +1605,8 @@ function moveRegion(x){
 function transfer(){
  let p=me(),logs=s.transferLog||[],byYear=[...new Set(logs.map(x=>x.year))].sort((a,b)=>b-a);
  if(!window.marketFilter)window.marketFilter='ALL';
- let visible=logs.filter(x=>x.type!=='루키 생성'&&(window.marketFilter==='ALL'||String(x.year)===String(window.marketFilter)));
+ const isForeignAcademyPoolLog=x=>x.type==='루키 생성'&&x.from==='신인 풀'&&(['LPL','LEC','LCS','LCP','CBLOL'].some(l=>String(x.to||'').includes(l)&&(/아카데미|Academy/i.test(String(x.to||''))||String(x.extra||'').startsWith(l+' '))));
+ let visible=logs.filter(x=>!isForeignAcademyPoolLog(x)&&(window.marketFilter==='ALL'||String(x.year)===String(window.marketFilter)));
  let current=activePlayers(teamOf(p)||{players:[]});
  return `<section class="card"><h2>🔄 이적 시장</h2>
  <p>현재 계약: ${esc(p.team)} · 연봉 ${s.salary.toFixed(0)}만 원 · 잔여 ${s.contract}년</p>
@@ -1783,7 +1785,7 @@ function applyRookiePipelinePatch(){
  for(const league of ['LPL','LEC','LCS','LCP','CBLOL']){
   const poolId=`__${league}_ACADEMY_POOL__`;
   if(s.world.teams[poolId])continue;
-  const pool={id:poolId,name:`${league} 리그 아카데미`,league:'ACADEMY',sourceLeague:league,hidden:true,players:[],staff:[],wins:0,losses:0,sets:0,prestige:25};
+  const pool={id:poolId,name:`${league} Academy`,league:'ACADEMY',sourceLeague:league,hidden:true,players:[],staff:[],wins:0,losses:0,sets:0,prestige:25};
   for(const pos of POS)for(let n=0;n<4;n++){
    const rookie=makePlayer(genRookieName(),pos,'ACADEMY',poolId,false,Math.floor(r(16,19)));
    rookie.placeholder=false;rookie.rookie=true;rookie.generated=true;rookie.academyOrigin=true;rookie.academyLeague=league;rookie.academyDebutYear=s.year;
