@@ -1300,7 +1300,7 @@ function monthlyCompetitionIdentity(e){
  const name=String(e?.name||'').trim();
  if(/월즈|worlds/i.test(name))return '월즈';
  return competitionIdentity(e)
-  .replace(/\\s+(?:그룹 대항전|[AB]조 그룹 스테이지|그룹 스테이지|스위스 스테이지|녹아웃 스테이지|녹아웃|플레이인|플레이-인|플레이오프|정규시즌|결승|진출팀 검증|본선 1단계|본선 2단계|지역 예선)$/i,'')
+  .replace(/\s+(?:그룹 대항전|[AB]조 그룹 스테이지|그룹 스테이지|스위스 스테이지|녹아웃 스테이지|녹아웃|플레이인|플레이-인|플레이오프|정규시즌|결승|진출팀 검증|본선 1단계|본선 2단계|지역 예선)$/i,'')
   .trim();
 }
 function monthlyResultsHTML(ms){
