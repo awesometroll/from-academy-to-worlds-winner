@@ -617,16 +617,16 @@ function offseason(){
  normalizeAllRosters();
  processAIContractExpiries();
  let moves=0;
- let all=Object.values(s.world.players).filter(p=>!p.player&&!p.retired&&p.team!=='FA'&&p.league!=='INVITE'&&s.world.teams[p.team]?.league!=='INVITE').sort(()=>Math.random()-.5);
+ let all=Object.values(s.world.players).filter(p=>!p.player&&!p.retired&&p.team!=='FA').sort(()=>Math.random()-.5);
  for(const p of all){
   if(Math.random()>=.085)continue;
-  let same=Object.values(s.world.teams).filter(t=>t.league!=='INVITE'&&(!p.contractUntil||p.contractUntil<=s.year)&&t.id!==p.team&&canJoinTeam(t,p.pos)&&eligibleForTeam(p,t)&&recruitFit(t,p)>=.075&&leagueTransferWeight(t,p)>.04&&sensibleReplacement(p,activePlayers(t).find(x=>x.pos===p.pos&&!x.player)));
+  let same=Object.values(s.world.teams).filter(t=>(!p.contractUntil||p.contractUntil<=s.year)&&t.id!==p.team&&canJoinTeam(t,p.pos)&&eligibleForTeam(p,t)&&recruitFit(t,p)>=.075&&leagueTransferWeight(t,p)>.04&&sensibleReplacement(p,activePlayers(t).find(x=>x.pos===p.pos&&!x.player)));
   if(!same.length)continue;
   let from=teamOf(p),to=weightedPick(same,t=>recruitFit(t,p)*Math.max(.1,teamRecruitReputation(t)/70));
   if(transferPlayer(p,to,'구단 명성·선수 오버롤·선수 명성 매칭')){moves++;if(moves<18&&shouldShowTransferNews(p,from,to))news(`🔄 ${p.name}: ${from.name} → ${to.name} 이적`)}
  }
  for(let t of Object.values(s.world.teams)){
-  if(t.hidden||t.league==='INVITE')continue;
+  if(t.hidden)continue;
   if(Math.random()<.18){let old=t.staff[0];t.staff[0]={name:genName(),role:'감독',skill:Math.round(r(60,89)),fictional:true};
    logMove('감독 교체',null,old?.name||'',t.name,t.staff[0].name+' 부임');
    if(Math.random()<.25&&teamHasMajorNews(t))news(`📋 ${t.name} 감독 교체 (${old.name} → ${t.staff[0].name})`)}
@@ -1774,7 +1774,7 @@ function transfer(){
  const groups={'해외':['LPL','LEC','LCS','LCP','CBLOL'],'LCK':['LCK'],'CL':['LCK CL'],'아카데미':['ACADEMY']};
  const groupOf=(entry)=>{let team=s.world.teams[entry.to]||s.world.teams[entry.from];let lg=team?.league||'';return lg==='LCK'?'LCK':lg==='LCK CL'?'CL':lg==='ACADEMY'?'아카데미':'해외'};
  const years=[...new Set(logs.map(x=>Number(x.year)).filter(Number.isFinite))].sort((a,b)=>b-a);window.marketYear??='all';
- const rows=logs.filter(x=>groupOf(x)===window.marketLeagueTab&&(window.marketYear==='all'||Number(x.year)===Number(window.marketYear)));
+ const rows=logs.filter(x=>s.world.teams[x.from]?.league!=='INVITE'&&s.world.teams[x.to]?.league!=='INVITE'&&groupOf(x)===window.marketLeagueTab&&(window.marketYear==='all'||Number(x.year)===Number(window.marketYear)));
  return `<section class="card"><h2>🔄 이적 시장</h2><p>현재 소속 ${esc(me().team)} · 연봉 ${moneyLabel(s.salary)} · 잔여 계약 ${s.contract}년</p><div class="round-switches">${Object.keys(groups).map(g=>`<button class="${window.marketLeagueTab===g?'on':''}" onclick="window.marketLeagueTab='${g}';render()">${g}</button>`).join('')}</div><div class="row"><label for="marketYear">이적 기록 연도</label><select id="marketYear" onchange="window.marketYear=this.value;render()"><option value="all" ${window.marketYear==='all'?'selected':''}>전체 연도</option>${years.map(y=>`<option value="${y}" ${Number(window.marketYear)===y?'selected':''}>${y}년</option>`).join('')}</select><span class="muted">총 ${rows.length}건</span></div>${s.contractPending?'<div class="notice">계약 만료: 제안 확인 또는 현 소속팀 재계약이 필요합니다.</div>':''}${s.offers?.length?s.offers.map((o,i)=>`<div class="stat"><b>${esc(o.team)}</b><p>구단 명성 ${teamRecruitReputation(s.world.teams[o.team])}/100 · 연봉 ${moneyLabel(o.salary)} · ${o.years}년 · ${esc(s.world.teams[o.team]?.league||'')}</p><button onclick="beginPlayerNegotiation(${i})">계약 협상</button></div>`).join(''):'<p class="muted">현재 진행 중인 제안이 없습니다.</p>'}${s.contractPending?'<button onclick="stay()">현 소속팀 재계약 협상</button>':''}<h3>이적 기록</h3>${rows.length?rows.slice(0,250).map(x=>`<div class="transfer-entry"><small>${x.year}.${x.month} · ${esc(x.type)}</small><strong>${esc(x.player||x.extra||'구단 소식')}</strong><div>${esc(x.from)} ${x.to?'→ '+esc(x.to):''}</div></div>`).join(''):'<p class="muted">해당 연도 기록 없음</p>'}</section>`
 }
 const _renderOriginal=render;
