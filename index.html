@@ -405,6 +405,14 @@ function teamRecruitReputation(t){
  const seed=PRESEASON[t.name]??baseline;
  return rnd(clamp((leagueBase[t.league]??58)+(seed-baseline)*.72+((Number(t.prestige)||60)-60)*.22,25,96));
 }
+function teamHasMajorNews(t){
+ if(!t||t.hidden)return false;
+ const won=(s.tournaments||[]).some(ev=>ev?.winner===t.name);
+ return won||teamRecruitReputation(t)>=80;
+}
+function shouldShowTransferNews(p,from,to){
+ return Number(p?.fame)>=85||teamHasMajorNews(from)||teamHasMajorNews(to);
+}
 function playerMarketFit(t,p){
  const rep=teamRecruitReputation(t),skill=avg(p.stats),fame=Number(p.fame)||0;
  // 명성 높은 팀일수록 높은 오버롤·인지도의 선수를 선호하지만 유망주 영입도 가능.
@@ -590,13 +598,13 @@ function offseason(){
   let same=Object.values(s.world.teams).filter(t=>(!p.contractUntil||p.contractUntil<=s.year)&&t.id!==p.team&&canJoinTeam(t,p.pos)&&eligibleForTeam(p,t)&&recruitFit(t,p)>=.075&&leagueTransferWeight(t,p)>.04&&sensibleReplacement(p,activePlayers(t).find(x=>x.pos===p.pos&&!x.player)));
   if(!same.length)continue;
   let from=teamOf(p),to=weightedPick(same,t=>recruitFit(t,p)*Math.max(.1,teamRecruitReputation(t)/70));
-  if(transferPlayer(p,to,'구단 명성·선수 오버롤·선수 명성 매칭')){moves++;if(moves<18)news(`🔄 ${p.name}: ${from.name} → ${to.name} 이적`)}
+  if(transferPlayer(p,to,'구단 명성·선수 오버롤·선수 명성 매칭')){moves++;if(moves<18&&shouldShowTransferNews(p,from,to))news(`🔄 ${p.name}: ${from.name} → ${to.name} 이적`)}
  }
  for(let t of Object.values(s.world.teams)){
   if(t.hidden)continue;
   if(Math.random()<.18){let old=t.staff[0];t.staff[0]={name:genName(),role:'감독',skill:Math.round(r(60,89)),fictional:true};
    logMove('감독 교체',null,old?.name||'',t.name,t.staff[0].name+' 부임');
-   if(Math.random()<.25)news(`📋 ${t.name} 감독 교체 (${old.name} → ${t.staff[0].name})`)}
+   if(Math.random()<.25&&teamHasMajorNews(t))news(`📋 ${t.name} 감독 교체 (${old.name} → ${t.staff[0].name})`)}
  }
  promoteAcademyAI();addRookies();normalizeAllRosters();
 }
@@ -1269,7 +1277,7 @@ function acceptOffer(i){
  logMove('플레이어 이적',p,old.name,dest.name,`${s.salary}만 원 · ${s.contract}년`);
  if(!activePlayers(old).some(x=>x.pos===p.pos))rookieFor(old,p.pos,'플레이어 이적 공백 충원');
  normalizeRoster(old);normalizeRoster(dest);
- news(`🚨 [오피셜] ${p.name}, ${dest.name} 이적!`);save();render();
+ if(shouldShowTransferNews(p,old,dest))news(`🚨 [오피셜] ${p.name}, ${dest.name} 이적!`);save();render();
 }
 function closeOverlay(){
  const ov=document.getElementById('overlay');
