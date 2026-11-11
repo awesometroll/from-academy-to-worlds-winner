@@ -1319,7 +1319,7 @@ function competitionIdentity(e){
  if(/^WSCI\b/i.test(n)||/^WSCI 본선/.test(n))return 'WSCI';
  if(/^Asia Masters\b/i.test(n))return 'AM';
  if(/^First Stand\b/i.test(n))return 'FST';
- if(/^MSI(?:\b|\\s)/i.test(n))return 'MSI';
+ if(/^MSI(?:\b|\s)/i.test(n))return 'MSI';
  if(/^Worlds\b/i.test(n))return 'WORLDS';
  if(/^LEC Versus\b/i.test(n))return 'LEC';
  if(/^LCK (?:Road to MSI|시즌|정규|레전드|라이즈|1~2)/i.test(n))return 'LCK';
@@ -1513,7 +1513,7 @@ function eventDetail(e){let info='';
  if(e.swiss)info+=`<h3>스위스 최종 전적</h3><div class="scroll"><table>${e.swiss.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.w}승 ${x.l}패</td><td>${e.qualified.includes(x.name)?'8강 진출':'탈락'}</td></tr>`).join('')}</table></div>`;
  if(e.qualified)info+=`<p>✅ 진출팀: ${e.qualified.map(esc).join(' · ')}</p>`;
  if(e.note)info+=`<p class="notice">${esc(e.note)}</p>`;
- return `<h3>${esc(e.name)}</h3>${e.winner&&!/(Road to MSI|로투엠|플레이인)/i.test(e.name||'')?`<p>🏆 우승: <b>${esc(e.winner)}</b></p>`:''}${info}${bracketDisplay(e)}`;
+ return `<h3>${esc(competitionIdentity(e))}</h3>${e.winner&&!/(Road to MSI|로투엠|플레이인)/i.test(e.name||'')?`<p>🏆 우승: <b>${esc(e.winner)}</b></p>`:''}${info}${bracketDisplay(e)}`;
 }
 function calendar(){let monthNames={1:'LCK컵 그룹 대항전 · LEC Versus · 지역 개막 리그',2:'LCK컵 플레이인·PO · LPL Split 1 · 지역 개막 PO',3:'First Stand · 2개 그룹 더블 엘리미네이션 → 4강·결승',4:'LCK 1~2라운드 · 지역 정규시즌',5:'지역 PO · LPL Split 2 · 아시안게임 국가대표 발표(4년마다)',6:'Asia Masters · LCK Road to MSI · MSI',7:'LCK 레전드/라이즈 (3~4R) · LPL Split 3 그룹 · EWC',8:'LCK 시즌 플레이인·PO · 지역 PO',9:'아시안게임 금메달 결정 (2026년부터 4년마다)',10:'Worlds 플레이인 · 스위스 · Demacia Cup',11:'Worlds 녹아웃',12:'KeSPA Cup'};return `<section class="card"><h2>🗓️ ${s.year} 시즌 캘린더</h2><div class="grid">${Array.from({length:12},(_,i)=>{let m=i+1;return `<div class="stat" style="border-color:${m===s.month?'#e7c36c':'#355173'}"><b>${m}월 ${m===s.month?'◀':''}</b><p>${monthNames[m]}</p><small>${m<s.month?'진행 완료':m===s.month?'진행 예정':'미래 일정'}</small></div>`}).join('')}</div><p class="muted">대회별 본선 방식은 구분해 시뮬레이션합니다. 월 단위 압축 일정과 일부 해외 대회·시드 배정·국가대표 선발은 실제 규정과 다를 수 있습니다.</p></section>`}
 function moveCategory(x){if(x.type==='은퇴')return '은퇴';if(x.type==='재계약')return '재계약';return '이적'}
