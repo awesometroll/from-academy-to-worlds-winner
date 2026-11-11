@@ -1296,6 +1296,13 @@ function nextMonth(){
    '<p><button class="primary" onclick="closeOverlay()">결과 확인 →</button></p>';
  }catch(e){body.innerHTML=`<h2>진행 오류</h2><p>${esc(e.message)}</p><button onclick="closeOverlay()">닫기</button>`;console.error(e)}},850);
 }
+function monthlyCompetitionIdentity(e){
+ const name=String(e?.name||'').trim();
+ if(/월즈|worlds/i.test(name))return '월즈';
+ return competitionIdentity(e)
+  .replace(/\\s+(?:그룹 대항전|[AB]조 그룹 스테이지|그룹 스테이지|스위스 스테이지|녹아웃 스테이지|녹아웃|플레이인|플레이-인|플레이오프|정규시즌|결승|진출팀 검증|본선 1단계|본선 2단계|지역 예선)$/i,'')
+  .trim();
+}
 function monthlyResultsHTML(ms){
  const first=ms[0],last=ms[ms.length-1],old=first.old,now=last.now;
  const labels=ms.map(m=>`${m.year}년 ${m.month}월`);
@@ -1305,7 +1312,7 @@ function monthlyResultsHTML(ms){
  const periodSummary={...last,old,now,games,wins,rating:rnd(rating)};
  const comments=getMonthComments(periodSummary);
  const events=[...new Map(ms.flatMap(m=>m.events.map(e=>{
-  const title=competitionIdentity(e);
+  const title=monthlyCompetitionIdentity(e);
   return [title,{title,month:`${m.year}년 ${m.month}월`,winner:e.winner}];
  })).map(e=>[e.title,e])).values()];
  return `<h2>📅 ${labels[0]} ~ ${labels[labels.length-1]} 결산</h2><div class="stats"><div class="stat">출전 경기<b>${games}</b></div><div class="stat">승리<b>${wins}</b></div><div class="stat">경기 평점<b>${games?rating.toFixed(2):'미출전'}</b></div><div class="stat">총 수입<b>${income.toFixed(1)}만 원</b></div></div>
