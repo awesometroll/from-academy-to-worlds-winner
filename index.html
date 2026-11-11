@@ -1605,8 +1605,8 @@ function moveRegion(x){
 function transfer(){
  let p=me(),logs=s.transferLog||[],byYear=[...new Set(logs.map(x=>x.year))].sort((a,b)=>b-a);
  if(!window.marketFilter)window.marketFilter='ALL';
- const isForeignAcademyPoolLog=x=>x.type==='루키 생성'&&x.from==='신인 풀'&&(['LPL','LEC','LCS','LCP','CBLOL'].some(l=>String(x.to||'').includes(l)&&(/아카데미|Academy/i.test(String(x.to||''))||String(x.extra||'').startsWith(l+' '))));
- let visible=logs.filter(x=>!isForeignAcademyPoolLog(x)&&(window.marketFilter==='ALL'||String(x.year)===String(window.marketFilter)));
+ const isAcademyPoolLog=x=>x.type==='루키 생성'&&x.from==='신인 풀';
+ let visible=logs.filter(x=>!isAcademyPoolLog(x)&&(window.marketFilter==='ALL'||String(x.year)===String(window.marketFilter)));
  let current=activePlayers(teamOf(p)||{players:[]});
  return `<section class="card"><h2>🔄 이적 시장</h2>
  <p>현재 계약: ${esc(p.team)} · 연봉 ${s.salary.toFixed(0)}만 원 · 잔여 ${s.contract}년</p>
