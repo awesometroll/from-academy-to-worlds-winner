@@ -614,10 +614,12 @@ function promoteAcademyAI(){
    let rival=activePlayers(upper).find(p=>p.pos===pos&&!p.player);if(!rival)continue;
    let score=promotionScore(candidate,upper);if(score<64||!sensibleReplacement(candidate,rival)||Math.random()>.22)continue;
    lower.players=lower.players.filter(x=>x!==candidate.id);upper.players=upper.players.filter(x=>x!==rival.id);
-   lower.players.push(rival.id);upper.players.push(candidate.id);
+   upper.players.push(candidate.id);
    let lowName=lower.name,upName=upper.name;
-   candidate.team=upName;candidate.league=upper.league;rival.team=lowName;rival.league=lower.league;
-   logMove('승격',candidate,lowName,upName,`평가 ${score.toFixed(1)}점 · 동일 구단`);logMove('강등',rival,upName,lowName,'동일 구단 로스터 교체');
+   candidate.team=upName;candidate.league=upper.league;
+   releaseFromTeam(rival,'상위팀 동일 포지션 선수 승격 영입 · FA 전환');
+   logMove('승격',candidate,lowName,upName,`평가 ${score.toFixed(1)}점 · 동일 구단`);
+   normalizeRoster(lower);
   }
  }
  }
