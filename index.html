@@ -1816,7 +1816,7 @@ const _agePlayerTypeBase=agePlayer;
 agePlayer=function(p){
  if(!p?.player||!TYPE_GROWTH_ATTRS[p.type])return _agePlayerTypeBase(p);
  const row=RATES.find(x=>p.age<=x[0])||RATES[RATES.length-1],attrs=TYPE_GROWTH_ATTRS[p.type];
- p.stats=p.stats.map((v,i)=>{const focused=!!p.player&&s.focus.includes(i),lo=row[focused?3:1],hi=row[focused?4:2];let d=r(lo,hi)*(isGeneratedAIPlayer(p)?potentialGrowthRate(p.potential):1);if(attrs.includes(i))d*=d>0?1.2:.8;const limit=v>88?.30:v>78?.60:1;return rnd(clamp(v+d*(d>0?limit:1),20,99))});
+ p.stats=p.stats.map((v,i)=>{const focused=!!p.player&&s.focus.includes(i),lo=row[focused?3:1],hi=row[focused?4:2];let d=r(lo,hi)*(receivesPotentialGrowth(p)?potentialGrowthRate(p.potential):1);if(attrs.includes(i))d*=d>0?1.2:.8;const limit=v>88?.30:v>78?.60:1;return rnd(clamp(v+d*(d>0?limit:1),20,99))});
  p.condition=clamp(p.condition+r(-8,9),42,100);
  if(attrs.includes('trust')){let td=r(-.16,.21);td*=td>0?1.2:.8;p.trust=clamp((Number(p.trust)||65)+td,0,100)}
  if(!p.player)checkAIRetirement(p);
