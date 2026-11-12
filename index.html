@@ -400,7 +400,6 @@ function logMove(type,p,from,to,extra=''){
  }
  const duplicate=s.transferLog.some(x=>x.year===s.year&&x.type===type&&x.player===playerName&&x.from===(from||'')&&x.to===(to||'')&&x.extra===(extra||''));if(duplicate)return;
  s.transferLog.unshift({year:s.year,month:s.month,sequence:(s.transferSequence=(s.transferSequence||0)+1),type,player:playerName,position:p?.pos||'',from:from||'',to:to||'',extra});
- s.transferLog=s.transferLog.slice(0,400);
 }
 function releaseFromTeam(p,reason){
  let t=s.world.teams[p.team];if(!t)return;
