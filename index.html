@@ -667,7 +667,7 @@ function swiss(teams,label){let state=Object.fromEntries(teams.map(n=>[n,{w:0,l:
 function qualify(league,n){let e=s.lastStandings[league];if(e?.year===s.year)return e.standings.slice(0,n).map(x=>x.name);return [...LEAGUES[league]].sort((a,b)=>power(s.world.teams[b])-power(s.world.teams[a])).slice(0,n)}
 // 2026 tournament engine. All stage matches are stored and rendered, rather than independently invented.
 function withMatchContext(context,fn){const previous=s.matchContext;s.matchContext={...(previous||{}),...(context||{})};try{return fn()}finally{s.matchContext=previous}}
-function recordStage(name,kind,rounds,extra={}){let ev={year:s.year,month:s.month,name,kind,rounds,matches:rounds.flatMap(q=>q.games||[]),...extra};s.tournaments.push(ev);if(ev.winner){news(`🏆 ${name} 우승: ${ev.winner}`);if(ev.winner===me().team){s.champions.push({year:s.year,name});me().fame=clamp(me().fame+8,0,100)}}return ev}
+function recordStage(name,kind,rounds,extra={}){let ev={year:s.year,month:s.month,name,kind,rounds,matches:rounds.flatMap(q=>q.games||[]),...extra};s.tournaments.push(ev);if(ev.winner&&!['playin','qualifier'].includes(kind)){news(`🏆 ${name} 우승: ${ev.winner}`);if(ev.winner===me().team){s.champions.push({year:s.year,name});me().fame=clamp(me().fame+8,0,100)}}return ev}
 function matchRound(name,pairs,bo=5){return {name,games:pairs.filter(p=>p[0]&&p[1]&&p[0]!==p[1]).map(([a,b])=>simulateMatch(a,b,bo,true,{stage:name}))}}
 function mWin(g){return g.winner}function mLose(g){return g.loser}
 function sixTeamDouble(field,label){ // Seed 1/2: upper R2. Higher seed among upper R2 losers joins lower R3.
@@ -1361,7 +1361,7 @@ function monthlyResultsHTML(ms){
   const title=monthlyCompetitionIdentity(e);
   if(!title)continue;
   const current=eventGroups.get(title)||{title,winner:''};
-  if(e?.winner)current.winner=e.winner;
+  if(e?.winner&&!['playin','qualifier'].includes(e.kind))current.winner=e.winner;
   eventGroups.set(title,current);
  }
  const events=[...eventGroups.values()];
@@ -1372,7 +1372,7 @@ function monthlyResultsHTML(ms){
  <section class="card"><h3>💬 코멘트</h3>${comments.length?comments.map(c=>`<div class="comment"><b>${esc(c.who)}</b> ${esc(c.text)}</div>`).join(''): `<p class="muted">${games?'등록된 코멘트가 없습니다.':'출전 경기가 없어 실전 경기력 평가를 하지 않습니다.'}</p>`}<p class="muted">감독 평가: ${rating>=8?'매우 인상적인 활약':games?'다음 달 경기력을 지켜보겠다':'훈련과 주전 경쟁에 집중하자'}</p></section>
  <h3>🏆 이번 기간 대회</h3>${events.length?events.map(e=>`<div class="pill">${esc(e.title)}${e.winner?` · 우승팀: ${esc(e.winner)}`:''}</div>`).join(''):'<p class="muted">이번 기간 종료된 대회 없음</p>'}`;
 }
-function monthlyHTML(m){return monthlyResultsHTML([m])}function setTab(t){tab=t;render()}function save(){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){console.warn('저장 불가:',e)}}function load(){try{let d=JSON.parse(localStorage.getItem(KEY));if(d?.v===5&&d.world?.teams&&d.world?.players){s=d;s.champions=(s.champions||[]).filter(x=>!/^LCK Road to MSI$/i.test(String(x.name||'')));ensureForeignAcademyPools();correctRealAges(s.world,s.year);fixFameOnLoad(s.world);s.transferLog??=[];s.contractPending??=false;s.negotiation??=null;s.asianSelections??={};s.asianResults??={};recoverAsianGoldMedalists();s.militaryStatus??=(s.military?"복무 완료":s.exempt?"병역특례":"미필");for(const ai of Object.values(s.world.players))if(!ai.player&&ai.bestOverall==null)ai.bestOverall=avg(ai.stats);normalizeAllRosters();save();return true}}catch(e){console.warn(e)}return false}
+function monthlyHTML(m){return monthlyResultsHTML([m])}function setTab(t){tab=t;render()}function save(){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){console.warn('저장 불가:',e)}}function load(){try{let d=JSON.parse(localStorage.getItem(KEY));if(d?.v===5&&d.world?.teams&&d.world?.players){s=d;s.champions=(s.champions||[]).filter(x=>!(/^(?:LCK Road to MSI|Worlds 플레이인(?: \(BO5 더블 엘리미네이션\))?)$/i.test(String(x.name||''))));ensureForeignAcademyPools();correctRealAges(s.world,s.year);fixFameOnLoad(s.world);s.transferLog??=[];s.contractPending??=false;s.negotiation??=null;s.asianSelections??={};s.asianResults??={};recoverAsianGoldMedalists();s.militaryStatus??=(s.military?"복무 완료":s.exempt?"병역특례":"미필");for(const ai of Object.values(s.world.players))if(!ai.player&&ai.bestOverall==null)ai.bestOverall=avg(ai.stats);normalizeAllRosters();save();return true}}catch(e){console.warn(e)}return false}
 function reset(){if(confirm('모든 V5 저장 데이터를 지우고 새 게임을 시작할까요?')){localStorage.removeItem(KEY);s=null;tab='home';header();startOptions();}}
 function header(){document.getElementById('topbar').innerHTML=s?`${esc(me().name)} · ${s.year}년 ${s.month}월 · ${esc(me().team)} · ${s.cash.toFixed(1)}만 원`:'새로운 선수 커리어'}
 function menu(){return `<nav>${[['home','홈'],['training','훈련'],['roster','팀/로스터'],['events','대회 기록'],['calendar','캘린더'],['transfer','이적 시장'],['shop','장비 상점'],['records','커리어'],['news','뉴스/커뮤니티'],['settings','설정']].map(([k,v])=>`<button class="${tab===k?'active':''}" onclick="setTab('${k}')">${v}</button>`).join('')}</nav>`}
