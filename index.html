@@ -137,6 +137,7 @@ function rollPotential(){return pick(['S','A','B','C','D'])}
 function isGeneratedAIPlayer(p){return !!p&&!p.real&&!p.player}
 function receivesPotentialGrowth(p){return isGeneratedAIPlayer(p)||!!p?.player}
 function potentialGrowthRate(value){return ({E:.5,D:.6,C:.7,B:.8,A:1,S:1.12})[String(value||'E').toUpperCase()]??1}
+function potentialDeclineRate(p){const grade=String(p?.potential||'E').toUpperCase();return p?.player?({S:1,A:1.1,B:1.2,C:1.3,D:1.4}[grade]??1):({S:1,A:1,B:1.1,C:1.2,D:1.3,E:1.4}[grade]??1)}
 function makePlayer(name,pos,league,team,real=false,forceAge){let famous=['Faker','Chovy','Ruler','Canyon','Keria','Zeus','Caps','ShowMaker','Gumayusi','Oner','Kanavi','Kiin','Bdd','Knight','Bin','JackeyLove','Viper','Elk'];let strong=famous.includes(name)?r(86,94):real?r(73,88):r(48,65);let a=ATTR.map(()=>rnd(clamp(strong+r(-7,7),30,96)));let yearBorn=BIRTH_YEARS[name];let age=forceAge??(real&&yearBorn?2026-yearBorn:real?(league==='LCK CL'?18:22):Math.floor(r(16,20)));let peakStart=Math.floor(r(19,28)),peakEnd=peakStart+Math.floor(r(2,9));return {id:id(),name,pos,league,team,real,age,birthYear:real?yearBorn||null:null,birthDate:real?(VERIFIED_BIRTH_DATES[name]||null):null,ageVerified:!!(real&&yearBorn),ageEstimated:!!(real&&!yearBorn),stats:a,peakStart,peakEnd,curve:r(.65,1.35),potential:real?null:rollPotential(),fame:real?initialFame({name,league,real:true}):Math.round(r(2,16)),famePatch2026:!!real,condition:Math.round(r(70,96)),games:0,wins:0,kda:0,rating:0,trust:65,history:[],retired:false,role:'선수',bestOverall:avg(a)} }
 
 // 2026 LCK CL starting five (real player nicknames; roster snapshots may change).
@@ -340,7 +341,7 @@ function agePlayer(p){
     const lo=row[focused?3:1],hi=row[focused?4:2];
     // AI: 플레이어의 일반 훈련 성장 규칙과 동일한 감소량, 증가량만 1.1배.
     // 플레이어의 집중 훈련과 성장 수치는 변경하지 않는다.
-    let d=r(lo,hi)*(receivesPotentialGrowth(p)?potentialGrowthRate(p.potential):1);
+    let d=r(lo,hi);d*=d>0?(receivesPotentialGrowth(p)?potentialGrowthRate(p.potential):1):(receivesPotentialGrowth(p)?potentialDeclineRate(p):1);
     if(!p.player&&d>0)d*=1.1;
     const limit=v>88?.30:v>78?.60:1;
     return rnd(clamp(v+d*(d>0?limit:1),20,99));
@@ -1819,7 +1820,7 @@ const _agePlayerTypeBase=agePlayer;
 agePlayer=function(p){
  if(!p?.player||!TYPE_GROWTH_ATTRS[p.type])return _agePlayerTypeBase(p);
  const row=RATES.find(x=>p.age<=x[0])||RATES[RATES.length-1],attrs=TYPE_GROWTH_ATTRS[p.type];
- p.stats=p.stats.map((v,i)=>{const focused=!!p.player&&s.focus.includes(i),lo=row[focused?3:1],hi=row[focused?4:2];let d=r(lo,hi)*(receivesPotentialGrowth(p)?potentialGrowthRate(p.potential):1);if(attrs.includes(i))d*=d>0?1.2:.8;const limit=v>88?.30:v>78?.60:1;return rnd(clamp(v+d*(d>0?limit:1),20,99))});
+ p.stats=p.stats.map((v,i)=>{const focused=!!p.player&&s.focus.includes(i),lo=row[focused?3:1],hi=row[focused?4:2];let d=r(lo,hi);d*=d>0?(receivesPotentialGrowth(p)?potentialGrowthRate(p.potential):1):(receivesPotentialGrowth(p)?potentialDeclineRate(p):1);if(attrs.includes(i))d*=d>0?1.2:.8;const limit=v>88?.30:v>78?.60:1;return rnd(clamp(v+d*(d>0?limit:1),20,99))});
  p.condition=clamp(p.condition+r(-8,9),42,100);
  if(attrs.includes('trust')){let td=r(-.16,.21);td*=td>0?1.2:.8;p.trust=clamp((Number(p.trust)||65)+td,0,100)}
  if(!p.player)checkAIRetirement(p);
