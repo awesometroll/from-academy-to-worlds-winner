@@ -407,7 +407,7 @@ function logMove(type,p,from,to,extra=''){
 }
 function releaseFromTeam(p,reason){
  let t=s.world.teams[p.team];if(!t)return;
- t.players=t.players.filter(id=>id!==p.id);p.lastTeamLeague=t.league;p.lastAcademySourceLeague=t.league==='ACADEMY'?(t.sourceLeague||p.academyLeague||academyLeagueOf(t)):null;p.lastLeague=p.academyLeague||p.league;p.team='FA';p.league='FA';p.freeAgent=true;p.unattachedYears=0;
+ t.players=t.players.filter(id=>id!==p.id);p.lastTeamId=t.id;p.lastTeamName=t.name;p.lastTeamLeague=t.league;p.lastAcademySourceLeague=t.league==='ACADEMY'?(t.sourceLeague||p.academyLeague||academyLeagueOf(t)):null;p.lastLeague=p.academyLeague||p.league;p.team='FA';p.league='FA';p.freeAgent=true;p.unattachedYears=0;
  logMove('방출',p,t.name,'FA',reason||'로스터 정리');
 }
 // Game-specific eligibility: LCK and LCK CL roster registration requires age >=18.
@@ -502,7 +502,7 @@ function fillVacancy(t,pos,reason){
  fillingVacancies.add(key);
  try{
   // Re-sign unattached players before removing an active lower-division player.
-  let pool=Object.values(s.world.players).filter(p=>!p.retired&&!p.player&&p.pos===pos&&p.team==='FA'&&eligibleForTeam(p,t)&&sameRestrictedMarket(p,t)&&(p.league!=='ACADEMY'||academyLeagueOf(p)===academyLeagueOf(t)));
+  let pool=s.offseasonPhase==='faRecruitment'?Object.values(s.world.players).filter(p=>!p.retired&&!p.player&&p.pos===pos&&p.team==='FA'&&p.lastTeamId!==t.id&&eligibleForTeam(p,t)&&sameRestrictedMarket(p,t)&&(p.league!=='ACADEMY'||academyLeagueOf(p)===academyLeagueOf(t))):[];
   // Never insert a rookie generated in the current year directly into CL/first tier.
   pool=pool.filter(p=>!p.generated||p.academyDebutYear<s.year);
   pool.sort((a,b)=>avg(b.stats)-avg(a.stats));
@@ -627,9 +627,13 @@ function promoteAcademyAI(){
  }
 }
 function offseason(){
+ s.offseasonPhase='contractResolution';
  retireLongTermFreeAgents();
  normalizeAllRosters();
  processAIContractExpiries();
+ // 계약 처리와 FA 영입을 분리한다. 계약 만료 직후 자기 팀으로 재영입되는 것을 방지한다.
+ s.offseasonPhase='faRecruitment';
+ normalizeAllRosters();
  let moves=0;
  let all=Object.values(s.world.players).filter(p=>!p.player&&!p.retired&&p.team!=='FA').sort(()=>Math.random()-.5);
  for(const p of all){
@@ -646,6 +650,7 @@ function offseason(){
    if(Math.random()<.25&&teamHasMajorNews(t))news(`📋 ${t.name} 감독 교체 (${old.name} → ${t.staff[0].name})`)}
  }
  promoteAcademyAI();addRookies();normalizeAllRosters();
+ s.offseasonPhase=null;
 }
 function activeLineup(t){return POS.map(pos=>t.players.map(id=>s.world.players[id]).filter(p=>p&&!p.retired&&p.pos===pos&&eligibleForTeam(p,t)).sort((a,b)=>avg(effective(b))+b.trust*.12-(avg(effective(a))+a.trust*.12))[0]).filter(Boolean)}
 function simulateMatch(a,b,bo=3,important=false,matchContext={}){let A=s.world.teams[a],B=s.world.teams[b];if(!A||!B)return null;matchContext={...(s.matchContext||{}),...(matchContext||{})};let pa=power(A,B,important,matchContext),pb=power(B,A,important,matchContext);let winA=0,winB=0,need=Math.floor(bo/2)+1;let chance=setWinProbability(pa-pb);while(winA<need&&winB<need){Math.random()<chance?winA++:winB++}let winner=winA>winB?a:b,loser=winner===a?b:a;for(const [teamName,won] of [[a,winner===a],[b,winner===b]]){
