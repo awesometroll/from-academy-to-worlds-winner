@@ -133,7 +133,7 @@ function fixFameOnLoad(world){
     p.famePatch2026=true;
   }
 }
-function rollPotential(){const grades=[['E',33],['D',21],['C',14],['B',12],['A',10],['S',10]];let n=Math.random()*100;for(const [grade,weight] of grades){n-=weight;if(n<0)return grade}return 'S'}
+function rollPotential(){const grades=[['E',30],['D',24],['C',20],['B',14],['A',7],['S',5]];let n=Math.random()*100;for(const [grade,weight] of grades){n-=weight;if(n<0)return grade}return 'S'}
 function isGeneratedAIPlayer(p){return !!p&&!p.real&&!p.player}
 function potentialGrowthRate(value){return ({E:.5,D:.6,C:.7,B:.8,A:1,S:1.12})[String(value||'E').toUpperCase()]??1}
 function makePlayer(name,pos,league,team,real=false,forceAge){let famous=['Faker','Chovy','Ruler','Canyon','Keria','Zeus','Caps','ShowMaker','Gumayusi','Oner','Kanavi','Kiin','Bdd','Knight','Bin','JackeyLove','Viper','Elk'];let strong=famous.includes(name)?r(86,94):real?r(73,88):r(48,65);let a=ATTR.map(()=>rnd(clamp(strong+r(-7,7),30,96)));let yearBorn=BIRTH_YEARS[name];let age=forceAge??(real&&yearBorn?2026-yearBorn:real?(league==='LCK CL'?18:22):Math.floor(r(16,20)));let peakStart=Math.floor(r(19,28)),peakEnd=peakStart+Math.floor(r(2,9));return {id:id(),name,pos,league,team,real,age,birthYear:real?yearBorn||null:null,birthDate:real?(VERIFIED_BIRTH_DATES[name]||null):null,ageVerified:!!(real&&yearBorn),ageEstimated:!!(real&&!yearBorn),stats:a,peakStart,peakEnd,curve:r(.65,1.35),potential:real?null:rollPotential(),fame:real?initialFame({name,league,real:true}):Math.round(r(2,16)),famePatch2026:!!real,condition:Math.round(r(70,96)),games:0,wins:0,kda:0,rating:0,trust:65,history:[],retired:false,role:'선수',bestOverall:avg(a)} }
