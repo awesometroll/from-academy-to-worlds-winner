@@ -134,8 +134,9 @@ function fixFameOnLoad(world){
   }
 }
 function rollPotential(isPlayer=false){const weights=[];for(let v=50;v<=99;v++){let w;if(isPlayer)w=v<=69?1:v<=79?2:3;else w=v<=69?3:v<=79?2:1;weights.push({v,w})}const total=weights.reduce((a,x)=>a+x.w,0);let n=Math.random()*total;for(const x of weights){n-=x.w;if(n<0)return x.v}return 99}
+function isGeneratedAIPlayer(p){return !!p&&!p.real&&!p.player}
 function potentialGrowthRate(value){const p=Number(value)||50;return p<=60?.5:p<=67?.6:p<=73?.7:p<=79?.8:p<=89?1:1.12}
-function makePlayer(name,pos,league,team,real=false,forceAge){let famous=['Faker','Chovy','Ruler','Canyon','Keria','Zeus','Caps','ShowMaker','Gumayusi','Oner','Kanavi','Kiin','Bdd','Knight','Bin','JackeyLove','Viper','Elk'];let strong=famous.includes(name)?r(86,94):real?r(73,88):r(48,65);let a=ATTR.map(()=>rnd(clamp(strong+r(-7,7),30,96)));let yearBorn=BIRTH_YEARS[name];let age=forceAge??(real&&yearBorn?2026-yearBorn:real?(league==='LCK CL'?18:22):Math.floor(r(16,20)));let peakStart=Math.floor(r(19,28)),peakEnd=peakStart+Math.floor(r(2,9));return {id:id(),name,pos,league,team,real,age,birthYear:real?yearBorn||null:null,birthDate:real?(VERIFIED_BIRTH_DATES[name]||null):null,ageVerified:!!(real&&yearBorn),ageEstimated:!!(real&&!yearBorn),stats:a,peakStart,peakEnd,curve:r(.65,1.35),potential:rollPotential(false),fame:real?initialFame({name,league,real:true}):Math.round(r(2,16)),famePatch2026:!!real,condition:Math.round(r(70,96)),games:0,wins:0,kda:0,rating:0,trust:65,history:[],retired:false,role:'선수',bestOverall:avg(a)} }
+function makePlayer(name,pos,league,team,real=false,forceAge){let famous=['Faker','Chovy','Ruler','Canyon','Keria','Zeus','Caps','ShowMaker','Gumayusi','Oner','Kanavi','Kiin','Bdd','Knight','Bin','JackeyLove','Viper','Elk'];let strong=famous.includes(name)?r(86,94):real?r(73,88):r(48,65);let a=ATTR.map(()=>rnd(clamp(strong+r(-7,7),30,96)));let yearBorn=BIRTH_YEARS[name];let age=forceAge??(real&&yearBorn?2026-yearBorn:real?(league==='LCK CL'?18:22):Math.floor(r(16,20)));let peakStart=Math.floor(r(19,28)),peakEnd=peakStart+Math.floor(r(2,9));return {id:id(),name,pos,league,team,real,age,birthYear:real?yearBorn||null:null,birthDate:real?(VERIFIED_BIRTH_DATES[name]||null):null,ageVerified:!!(real&&yearBorn),ageEstimated:!!(real&&!yearBorn),stats:a,peakStart,peakEnd,curve:r(.65,1.35),potential:real?null:rollPotential(false),fame:real?initialFame({name,league,real:true}):Math.round(r(2,16)),famePatch2026:!!real,condition:Math.round(r(70,96)),games:0,wins:0,kda:0,rating:0,trust:65,history:[],retired:false,role:'선수',bestOverall:avg(a)} }
 
 // 2026 LCK CL starting five (real player nicknames; roster snapshots may change).
 Object.assign(REAL,{"BNK FEARX Youth": ["Kangin", "Zephyr", "FIESTA", "Slayer", "Luon"], "DN SOOPers Challengers": ["Lancer", "DDoiV", "Flip", "Enosh", "Quantum"], "Dplus KIA Challengers": ["Jaehyuk", "Sharvel", "Garden", "Wayne", "Loopy"], "Gen.G Global Academy": ["Ripple", "Courage", "Kemish", "MUDAI", "SIRIUSS"], "BRION Challengers": ["DDahyuk", "Dinai", "Tempester", "OddEye", "PlanB"], "Hanwha Life Esports Challengers": ["Panther", "Jackal", "Cracker", "Pyeonsik", "Bluffing"], "KT Rolster Challengers": ["Sero", "Sylvie", "HwiChan", "FenRir", "Pollu"], "DRX Challengers": ["Frog", "Winner", "AKaJe", "LazyFeel", "Minous"], "Nongshim Esports Academy": ["Janus", "Mihawk", "SeTab", "Lucy", "Pleata"], "T1 Esports Academy": ["Haetae", "Painter", "Guti", "Cypher", "Cloud"]});
@@ -338,7 +339,7 @@ function agePlayer(p){
     const lo=row[focused?3:1],hi=row[focused?4:2];
     // AI: 플레이어의 일반 훈련 성장 규칙과 동일한 감소량, 증가량만 1.1배.
     // 플레이어의 집중 훈련과 성장 수치는 변경하지 않는다.
-    let d=r(lo,hi)*potentialGrowthRate(p.potential);
+    let d=r(lo,hi)*(isGeneratedAIPlayer(p)?potentialGrowthRate(p.potential):1);
     if(!p.player&&d>0)d*=1.1;
     const limit=v>88?.30:v>78?.60:1;
     return rnd(clamp(v+d*(d>0?limit:1),20,99));
@@ -432,7 +433,7 @@ function playerMarketFit(t,p){
  const targetSkill=48+rep*.43,targetFame=rep*.66;
  const skillFit=Math.exp(-Math.pow((skill-targetSkill)/21,2));
  const fameFit=Math.exp(-Math.pow((fame-targetFame)/39,2));
- const prospect=(p.age<=21&&Number(p.potential)>=85)?1.12:1;
+ const prospect=(isGeneratedAIPlayer(p)&&p.age<=21&&Number(p.potential)>=85)?1.12:1;
  return clamp((skillFit*.68+fameFit*.32)*prospect,.015,1);
 }
 function recruitFit(t,p){
@@ -1813,7 +1814,7 @@ const _agePlayerTypeBase=agePlayer;
 agePlayer=function(p){
  if(!p?.player||!TYPE_GROWTH_ATTRS[p.type])return _agePlayerTypeBase(p);
  const row=RATES.find(x=>p.age<=x[0])||RATES[RATES.length-1],attrs=TYPE_GROWTH_ATTRS[p.type];
- p.stats=p.stats.map((v,i)=>{const focused=!!p.player&&s.focus.includes(i),lo=row[focused?3:1],hi=row[focused?4:2];let d=r(lo,hi)*potentialGrowthRate(p.potential);if(attrs.includes(i))d*=d>0?1.2:.8;const limit=v>88?.30:v>78?.60:1;return rnd(clamp(v+d*(d>0?limit:1),20,99))});
+ p.stats=p.stats.map((v,i)=>{const focused=!!p.player&&s.focus.includes(i),lo=row[focused?3:1],hi=row[focused?4:2];let d=r(lo,hi)*(isGeneratedAIPlayer(p)?potentialGrowthRate(p.potential):1);if(attrs.includes(i))d*=d>0?1.2:.8;const limit=v>88?.30:v>78?.60:1;return rnd(clamp(v+d*(d>0?limit:1),20,99))});
  p.condition=clamp(p.condition+r(-8,9),42,100);
  if(attrs.includes('trust')){let td=r(-.16,.21);td*=td>0?1.2:.8;p.trust=clamp((Number(p.trust)||65)+td,0,100)}
  if(!p.player)checkAIRetirement(p);
