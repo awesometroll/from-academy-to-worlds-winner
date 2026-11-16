@@ -439,26 +439,19 @@ function shouldShowTransferNews(p,from,to){
 }
 function playerMarketFit(t,p){
  const rep=teamRecruitReputation(t),skill=avg(p.stats),fame=Number(p.fame)||0;
- // 명성 높은 구단은 인지도 있는 선수를 더 선호하되, 저명성 고실력 선수도 놓치지 않는다.
- const targetSkill=48+rep*.43,targetFame=rep*.66;
- const skillFit=Math.exp(-Math.pow((skill-targetSkill)/23,2));
- const fameFit=Math.exp(-Math.pow((fame-targetFame)/46,2));
- const prospect=(isGeneratedAIPlayer(p)&&p.age<=21&&['A','S'].includes(p.potential))?1.14:1;
- return clamp((skillFit*.76+fameFit*.24)*prospect,.015,1);
+ // 구단 명성이 높을수록 더 높은 오버롤을 목표로 한다. 명성은 보조 요소로만 반영한다.
+ const leagueBase=LEAGUE_STRENGTH[t.league]??60;
+ const targetSkill=clamp(leagueBase+(rep-60)*.38,45,96);
+ const skillFit=Math.exp(-Math.pow((skill-targetSkill)/27,2));
+ const fameFit=clamp(1-Math.abs(fame-rep)/180,.72,1);
+ const prospect=(isGeneratedAIPlayer(p)&&p.age<=21&&['A','S'].includes(p.potential))?1.04:1;
+ return clamp(skillFit*.96+fameFit*.04,.015,1)*prospect;
 }
 function recruitFit(t,p){
  if(!eligibleForTeam(p,t))return 0;
- const skill=avg(p.stats),teamFame=rosterPrestige(t),rep=teamRecruitReputation(t);
- const incumbent=activePlayers(t).find(x=>x.pos===p.pos&&!x.player);
- const positionalSkill=incumbent?avg(incumbent.stats):rosterStrength(t)-3;
- const skillGap=skill-positionalSkill, fameGap=(Number(p.fame)||0)-teamFame;
- const skillFit=Math.exp(-Math.pow(skillGap/20,2));
- // 하위 명성 구단은 실력 중심, 상위 명성 구단은 인지도도 더 중요하게 평가한다.
- const fameWeight=clamp(.14+(rep-55)*.004,.12,.30);
- const fameFit=Math.exp(-Math.pow(fameGap/48,2));
- const tier=LEAGUE_STRENGTH[t.league]??60;
- const tierFit=Math.exp(-Math.pow((skill-tier)/34,2));
- return Math.max(0,skillFit*tierFit*((1-fameWeight)+fameFit*fameWeight)*playerMarketFit(t,p));
+ // 선수 오버롤을 최우선으로 평가한다. 기존 주전과의 오버롤 차이를 이유로 고실력 선수를 배제하지 않는다.
+ const skill=avg(p.stats);
+ return clamp(skill/100,.05,1)*playerMarketFit(t,p);
 }
 // All newly generated players originate in an academy roster, never directly in CL/first tier.
 function academyLeagueOf(pOrTeam){
@@ -577,13 +570,8 @@ function sameRestrictedMarket(p,team){const source=playerRestrictedMarketLeague(
 
 function sensibleReplacement(p,victim,to){
  if(!victim)return true;
- const gap=avg(p.stats)-avg(victim.stats);
- if(gap>=0)return true;
- if(gap<=-8)return false;
- const rep=to?teamRecruitReputation(to):65;
- const prospect=isGeneratedAIPlayer(p)&&p.age<=21&&['A','S'].includes(p.potential);
- const allowedGap=rep<65?5:rep<78?4:3;
- return prospect&&p.age+5<=victim.age&&p.age<=25&&gap>=-allowedGap;
+ // AI 영입·콜업으로 기존 선수보다 오버롤이 낮은 선수를 주전 자리에 넣지 않는다.
+ return avg(p.stats)>=avg(victim.stats);
 }
 function transferPlayer(p,to,why){
  // 계약 기간이 남은 AI 선수는 이적 불가. 계약 만료 후 FA가 된 경우에만 이동 가능.
