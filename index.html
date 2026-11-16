@@ -75,28 +75,63 @@ const FIRST=['Nova','Rift','Kairo','Astra','Mira','Echo','Vex','Zen','Argo','Lum
 const KEY='lol_career_v5_cl_real_rosters_2026';let s=null,tab='home',subLeague='LCK',subTeam='T1',profile=null,archiveIdx=0;
 const r=(a,b)=>a+Math.random()*(b-a),pick=a=>a[Math.floor(Math.random()*a.length)],clamp=(x,a,b)=>Math.max(a,Math.min(b,x)),avg=a=>a.reduce((x,y)=>x+y,0)/Math.max(1,a.length),rnd=n=>Math.round(n*100)/100,esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function id(){return 'p'+Math.random().toString(36).slice(2,10)}
-// Generated nicknames have no numerical suffix. Historical aliases can rarely reappear after 12 played years.
+// Fictional player and staff handles use one consistent esports-nickname style.
 const LEGACY_NICKS=['PraY','Bang','Wolf','Bengi','MaRin','Smeb','Score','Ambition','MadLife','Flame','Imp','Dade','Pawn','Deft','Uzi','Rekkles','Doublelift','Bjergsen','Sneaky','Clearlove','GorillA','Kuro','Khan','Nuguri','TheShy','Doinb'];
-const NICK_SUFFIX=['','X','Q','Prime','Z','Flux','V','Arc','Wave','Ray','Neo','Core','Ace','Fox','Star'];let initialRookieNames=new Set();
-function genName(){return pick(FIRST)+pick(NICK_SUFFIX)}
+const GENERATED_NICKS=[
+ 'Aether','Aero','Aiden','Akari','Akiro','Alto','Amity','Anima','Axiom','Azura','Beryl','Bison','Boreal','Caelum','Cipher','Cinder','Cobalt','Comet','Coral','Crown','Dawn','Daze','Drift','Eclipse','Eden','Elio','Ember','Enzo','Eon','Fable',
+ 'Fenix','Fjord','Flare','Flux','Frost','Gale','Garnet','Glacier','Halo','Haru','Haven','Helix','Hollow','Icarus','Ignis','Indigo','Iris','Jett','Juno','Kairo','Karma','Kaze','Kepler','Kiro','Koda','Kronos','Lancer','Lazul','Lior','Loki',
+ 'Lotus','Lucent','Lumen','Lyric','Mako','Maven','Mellow','Mica','Midas','Mika','Morrow','Myth','Nairo','Nami','Nero','Nexus','Niko','Nimble','Niven','Noir','Nox','Nyx','Oak','Obsidian','Onyx','Orbit','Orion','Oslo','Pace','Pavo',
+ 'Pixel','Pluto','Prism','Pulse','Quill','Raven','Reign','Remy','Riven','Rogue','Rook','Rune','Sable','Sage','Serein','Shade','Shiro','Solis','Solace','Sora','Spark','Stellar','Storm','Strix','Summit','Sylvan','Talon','Taro','Tecton','Tempest',
+ 'Thorne','Titan','Trace','Tundra','Umbra','Vale','Vega','Velox','Vesper','Vex','Vireo','Volt','Warden','Wisp','Xeno','Yoru','Yuki','Zeal','Zephyr','Zeno'
+];
+const NICK_PART_A=['Aero','Astra','Cinder','Echo','Frost','Kairo','Lumen','Nero','Nova','Onyx','Riven','Rune','Sable','Vega','Vex','Zephyr'];
+const NICK_PART_B=['Blade','Bloom','Drift','Flare','Forge','Frost','Glide','Knight','Light','Rift','Shade','Spark','Storm','Wave','Wing','Wolf'];
+let initialRookieNames=new Set(),allocatedGeneratedNames=new Set();
+function generatedNameIsUsed(name){
+ const key=String(name||'').toLowerCase();
+ if(!key||allocatedGeneratedNames.has(key))return true;
+ if(Object.values(s?.world?.players||{}).some(p=>String(p.name||'').toLowerCase()===key))return true;
+ if(Object.values(s?.world?.teams||{}).some(t=>(t.staff||[]).some(x=>String(x.name||'').toLowerCase()===key)))return true;
+ if(typeof REAL!=='undefined'&&Object.values(REAL).some(list=>Array.isArray(list)&&list.some(x=>String(x).toLowerCase()===key)))return true;
+ return false;
+}
+function allocateGeneratedName(allowLegacy=false){
+ let pool=allowLegacy?GENERATED_NICKS.concat(LEGACY_NICKS):GENERATED_NICKS;
+ for(let i=0;i<pool.length;i++){
+  const name=pick(pool);
+  if(!generatedNameIsUsed(name)){allocatedGeneratedNames.add(name.toLowerCase());return name;}
+ }
+ // Large, readable two-part handle pool prevents numeric or random-letter fallbacks.
+ for(let i=0;i<500;i++){
+  const name=pick(NICK_PART_A)+pick(NICK_PART_B);
+  if(!generatedNameIsUsed(name)){allocatedGeneratedNames.add(name.toLowerCase());return name;}
+ }
+ // Last-resort readable compound, still without digits or arbitrary suffixes.
+ let attempt=0,name='';
+ do{name=pick(NICK_PART_A)+pick(NICK_PART_B)+pick(['Prime','Zero','Nova','Neo']);attempt++}while(generatedNameIsUsed(name)&&attempt<1000);
+ allocatedGeneratedNames.add(name.toLowerCase());return name;
+}
+function genName(){return allocateGeneratedName(false)}
 function genRookieName(){
- const used=new Set([...initialRookieNames,...Object.values(s?.world?.players||{}).filter(p=>!p.retired).map(p=>p.name.toLowerCase())]);
- // 2026 start + 12 completed seasons = 2038. Roughly 8% of new academy rookies receive a classic alias.
- if(s?.year>=2038&&Math.random()<.08){
-  const available=LEGACY_NICKS.filter(n=>!used.has(n.toLowerCase()));
-  if(available.length){const n=pick(available);initialRookieNames.add(n.toLowerCase());return n;}
+ // Classic historical aliases only become eligible after twelve completed in-game years.
+ const allowLegacy=Number(s?.year)>=2038&&Math.random()<.08;
+ const name=allocateGeneratedName(allowLegacy);
+ initialRookieNames.add(name.toLowerCase());
+ return name;
+}
+function applyGeneratedNameCleanup(){
+ if(!s?.world?.players||s.generatedNameCleanupV1)return;
+ const players=Object.values(s.world.players);
+ const reserved=new Set(players.filter(p=>p.real).map(p=>String(p.name||'').toLowerCase()));
+ const targets=players.filter(p=>!p.real&&(p.generated||p.rookie||p.placeholder)).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+ for(const p of targets){
+  const key=String(p.name||'').toLowerCase();
+  if(key&&!reserved.has(key)){reserved.add(key);continue;}
+  let replacement=allocateGeneratedName(false);
+  while(reserved.has(replacement.toLowerCase()))replacement=allocateGeneratedName(false);
+  p.name=replacement;reserved.add(replacement.toLowerCase());
  }
- for(let i=0;i<120;i++){
-  const name=genName();
-  if(!used.has(name.toLowerCase())){initialRookieNames.add(name.toLowerCase());return name;}
- }
- // Extremely unlikely fallback: letter-only nickname, no numeric suffix.
- const letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
- for(let i=0;i<120;i++){
-  const name=pick(FIRST)+Array.from({length:4},()=>letters[Math.floor(Math.random()*letters.length)]).join('');
-  if(!used.has(name.toLowerCase())){initialRookieNames.add(name.toLowerCase());return name;}
- }
- return genName();
+ s.generatedNameCleanupV1=true;
 }
 const BIRTH_YEARS={"Labrov":2002,"SkewMond":2004,"TheShy":1999,"JackeyLove":2000,"Impact":1995,"Faker":1996,"Doran":2000,"Oner":2002,"Peyz":2005,"Keria":2002,"Kiin":1999,"Canyon":2001,"Chovy":2001,"Ruler":1998,"Duro":2002,"Zeus":2004,"Kanavi":2001,"Zeka":2002,"Gumayusi":2002,"Delight":2002,"Siwoo":2007,"Lucid":2005,"ShowMaker":2000,"Smash":2006,"Career":2004,"PerfecT":2004,"Cuzz":1999,"Bdd":1999,"Aiming":2000,"Ghost":1999,"Clear":2002,"Raptor":2004,"VicLa":2003,"Diable":2007,"Kellin":2001,"Kingen":2000,"Sponge":2004,"Scout":1998,"Lehends":1998,"Rich":1998,"Vincenzo":2004,"ucal":2001,"Jiwoo":2004,"Andil":2002,"DuDu":2001,"Pyosik":2000,"Clozer":2003,"deokdam":2000,"Peter":2003,"Casting":2003,"GIDEON":2003,"Teddy":1998,"Namgung":2003,"Bin":2003,"knight":2000,"Viper":2000,"Caps":1999,"Blaber":2000,"CoreJJ":1994,"BrokenBlade":2000,"Inspired":2002,"Jojopyun":2004,"Soboro":2004,"Hans Sama":1999,"Mikyx":1998,"Xiaohu":1998,"Tarzan":1999,"Razork":2000,"Yeon":2002,"Vulcan":1999,"Upset":1999,"Xiaohao":2002,"Haetae":2006,"Painter":2007,"Sylvie":2002,"Minous":2004,"LazyFeel":2007,"Winner":2003,"Guti":2004,"Cypher":2006,"Cloud":2007,"Ripple":2006,"Courage":2005,"Kemish":2005,"MUDAI":2005,"SIRIUSS":2006,"Panther":2008,"Jackal":2007,"Cracker":2008,"Pyeonsik":2006,"Bluffing":2008,"Jaehyuk":2007,"Sharvel":2007,"Garden":2007,"Wayne":2003,"Loopy":2004,"Sero":2005,"HwiChan":2006,"FenRir":2006,"Pollu":2006,"Frog":2005,"AKaJe":2008,"Janus":2007,"Mihawk":2009,"SeTab":2004,"Lucy":2006,"Pleata":2003,"DDahyuk":2004,"Dinai":2005,"Tempester":2005,"OddEye":2005,"PlanB":2006,"Kangin":2003,"Zephyr":2007,"FIESTA":2003,"Slayer":2003,"Luon":2003,"Lancer":2004,"DDoiV":2003,"Flip":2008,"Enosh":2004,"Quantum":2004,"Taeyoon":2002,"Fisher":2004,"Empyros":2004,"Vladi":2005,"Lospa":2002,"Rest":1998,"Shad0w":2001,"Pout":2003,"Doggo":2003,"KIno":1998,"Pun":2002,"Hizto":2007,"Bie":1999,"Guigo":2002,"Ayu":2005,"Flandre":1998,"Shanks":2001,"Hope":2000,"Kael":2004,"Xun":2002,"ON":2003,"Thanatos":2004,"APA":2002,"Zven":1997,"Photon":2001,"eXyu":2000,"Palafox":1999,"FBI":1999,"IgNar":1996,"Castle":2002,"KryRa":2002,"Callme":2004,"Sajed":2003,"Lyonz":2001,"Zdz":1999,"Angel":2000,"Leave":2002,"Parukia":2003,"Tatu":2005,"Tutsz":2002,"Jojo":2001,"Gakgos":2002,"Gryffinn":2004,"Quad":2002,"Massu":2004,"Cryogen":2005,"Lot":2003,"ISMA":2001,"Jackies":2004,"Noah":2001,"Jun":2000,"Wei":2002,"Rookie":1997,"Photic":2002,"Meiko":1998,"Xiaoxu":2002,"JunJia":2000,"HongQ":2005,"GALA":2001,"Vampire":2005,"Canna":2000,"Yike":2000,"kyeahoo":2004,"Caliste":2006,"Busio":2003,"sasi":2004,"Heng":2002,"Tangyuan":2003,"Shaoye":2003,"ycx":2004,"sheer":2006,"Croco":2000,"BuLLDoG":2005,"1xn":2003,"Missing":2001,"ZEST":2000,"Curse":2001,"Feisty":2002,"Duduhh":2000,"Ackerman":2001,"Zamudo":2002,"Saint":2001,"Berserker":2003,"Isles":2000,"Kratos":2003,"Gury":2004,"Chika":2002,"Harky":2003,"SiuLoong":2001,"Myrwn":2003,"Elyoya":2000,"Supa":2000,"Alvaro":2003,"Maynter":2004,"Rhilech":2003,"Poby":2006,"Hans_SamD":2001,"Parus":2003,"HOYA":2000,"Guwon":2002,"Care":2003,"Assum":2003,"Zhuo":2001,"Hery":2002,"Juhan":2001,"haichao":2003,"Starry":2004,"Moham":2002,"Wunder":1998,"Skeanz":2000,"LIDER":1999,"Jopa":2004,"HamBak":2003,"DARKWINGS":2004,"Rahel":2004,"huhi":1995,"Rooster":2004,"Boukada":2002,"nuc":2002,"Paduck":2004,"Trymbi":2000,"Fudge":2002,"Contractz":1999,"Zinie":2005,"Bvoy":1998,"Ceos":1998,"Tracyn":2004,"Sheo":2001,"Serin":2002,"Ice":2001,"Stend":2001,"Morgan":2001,"Josedeodo":1999,"Quid":2003,"Dire":2002,"Eddie":2007,"Naak_Nako":2005,"Lyncas":2003,"Humanoid":2000,"Carzzy":2002,"Fleshy":2001,"Cube":2002,"Monki":2004,"Karis":2003,"About":2005,"yaoyao":2003,"Keshi":2003,"Junhao":2005,"Heru":2004,"Ryan3":2005,"Feather":2002,"369":2001,"naiyou":2005,"Creme":2004,"JiaQi":2003,"fengyue":2005,"Liangchen":2004,"Grizzly":2005,"Saber":2003,"Hena":1999,"Xiaoxia":2003,"Zika":2003,"Jiejie":2001,"Elk":2001,"Erha":2003};
 const VERIFIED_BIRTH_DATES={"Hope":"2000-09-29","Kael":"2004-02-11","Xun":"2002-02-05","ON":"2003-05-12","Thanatos":"2004-05-01","APA":"2002-03-10","Zven":"1997-06-24","Photon":"2001-11-29","eXyu":"2000-11-15","Palafox":"1999-11-03","FBI":"1999-09-03","IgNar":"1996-06-19","Castle":"2002-07-19","KryRa":"2002-10-14","Callme":"2004-04-17","Sajed":"2003-11-15","Lyonz":"2001-11-08","Zdz":"1999-12-23","Angel":"2000-09-16","Leave":"2002-10-30","Parukia":"2003-01-13","Tatu":"2005-03-23","Tutsz":"2002-10-25","Jojo":"2001-11-19","Gakgos":"2002-04-12","Gryffinn":"2004-07-25","Quad":"2002-10-24","Massu":"2004-07-13","Cryogen":"2005-08-02","Lot":"2003-05-18","ISMA":"2001-11-12","Jackies":"2004-09-10","Noah":"2001-10-04","Jun":"2000-06-16","Wei":"2002-11-09","Rookie":"1997-03-11","Photic":"2002-02-06","Meiko":"1998-06-06","Xiaoxu":"2002-12-17","JunJia":"2000-06-10","HongQ":"2005-12-24","GALA":"2001-02-14","Vampire":"2005-02-08","Canna":"2000-02-11","Yike":"2000-11-11","kyeahoo":"2004-10-15","Caliste":"2006-08-29","Busio":"2003-07-08","sasi":"2004-10-22","Heng":"2002-06-11","Tangyuan":"2003-10-11","Shaoye":"2003-03-29","ycx":"2004-07-15","sheer":"2006-02-11","Croco":"2000-02-26","BuLLDoG":"2005-02-22","1xn":"2003-12-05","Missing":"2001-05-26","ZEST":"2000-01-17","Curse":"2001-04-25","Feisty":"2002-12-26","Duduhh":"2000-10-22","Ackerman":"2001-05-03","Zamudo":"2002-12-23","Saint":"2001-10-12","Berserker":"2003-05-25","Isles":"2000-10-09","Kratos":"2003-11-04","Gury":"2004-06-18","Chika":"2002-01-12","Harky":"2003-08-22","SiuLoong":"2001-05-15","Myrwn":"2003-06-27","Elyoya":"2000-03-13","Supa":"2000-11-20","Alvaro":"2003-06-13","Maynter":"2004-04-26","Rhilech":"2003-09-05","Poby":"2006-02-07","Hans_SamD":"2001-07-08","Parus":"2003-12-14","HOYA":"2000-08-29","Guwon":"2002-11-20","Care":"2003-05-16","Assum":"2003-12-28","Zhuo":"2001-02-21","Hery":"2002-06-15","Juhan":"2001-06-11","haichao":"2003-08-14","Starry":"2004-08-17","Moham":"2002-08-12","Wunder":"1998-11-09","Skeanz":"2000-09-22","LIDER":"1999-07-08","Jopa":"2004-11-19","HamBak":"2003-08-19","DARKWINGS":"2004-03-04","Rahel":"2004-06-02","huhi":"1995-03-03","Rooster":"2004-02-24","Boukada":"2002-08-17","nuc":"2002-12-21","Paduck":"2004-11-09","Trymbi":"2000-09-23","Fudge":"2002-11-21","Contractz":"1999-12-04","Zinie":"2005-08-01","Bvoy":"1998-11-22","Ceos":"1998-12-01","Tracyn":"2004-01-30","Sheo":"2001-08-22","Serin":"2002-09-25","Ice":"2001-09-05","Stend":"2001-05-19","Morgan":"2001-05-20","Josedeodo":"1999-12-22","Quid":"2003-09-10","Dire":"2002-09-14","Eddie":"2007-05-12","Naak_Nako":"2005-03-14","Lyncas":"2003-10-27","Humanoid":"2000-03-14","Carzzy":"2002-01-31","Fleshy":"2001-10-24","Cube":"2002-08-23","Monki":"2004-03-14","Karis":"2003-01-20","About":"2005-09-08","yaoyao":"2003-04-25","Keshi":"2003-10-30","Junhao":"2005-05-24","Heru":"2004-01-03","Ryan3":"2005-10-14","Feather":"2002-09-28","369":"2001-07-12","naiyou":"2005-04-03","Creme":"2004-02-12","JiaQi":"2003-11-02","fengyue":"2005-08-20","Liangchen":"2004-12-10","Grizzly":"2005-01-26","Saber":"2003-07-18","Hena":"1999-10-02","Xiaoxia":"2003-03-25","Zika":"2003-07-07","Jiejie":"2001-10-27","Elk":"2001-09-29","Erha":"2003-11-17"};
@@ -1828,7 +1863,7 @@ function applyRookiePipelinePatch(){
  }
  s.rookiePipelineV1=true;
 }
-function render(){applyRequestedEconomyPatch();applyRookiePipelinePatch();applyTeamTheme();header();if(!s){startOptions();return}if(s.retired){document.getElementById('app').innerHTML=careerEnding();return}let pages={home,training,roster,events,calendar,transfer,shop,loadout,records,news:newsTab,settings};document.getElementById('app').innerHTML=menu()+(pages[tab]||home)()}
+function render(){applyGeneratedNameCleanup();applyRequestedEconomyPatch();applyRookiePipelinePatch();applyTeamTheme();header();if(!s){startOptions();return}if(s.retired){document.getElementById('app').innerHTML=careerEnding();return}let pages={home,training,roster,events,calendar,transfer,shop,loadout,records,news:newsTab,settings};document.getElementById('app').innerHTML=menu()+(pages[tab]||home)()}
 
 
 /* === Player type growth + POM archive patch === */
