@@ -2148,122 +2148,124 @@ function render(){
 }
 
 
-/* === Career-first redesign v2: compact season hub and unified game shell === */
-(function injectCareerFirstV2(){
- const css=`
-  body{background:#0c0d10!important;color:#ececf0!important}
-  header{height:64px!important;padding:0 max(18px,calc((100vw - 1240px)/2))!important;background:#101115!important;border-bottom:1px solid #292b31!important}
-  header .brand-mark{border-radius:8px!important;background:var(--accent)!important;color:#101115!important;font-weight:950}
-  header .brand{font-size:15px!important;letter-spacing:.35px}
-  header #topbar{display:flex;align-items:center;gap:9px;color:#c4c4cc;font-size:12px}
-  main{max-width:1240px!important;padding:20px 22px 48px!important}
-  .career-layout{display:flex!important;flex-direction:column!important;gap:15px!important}
-  .career-nav{position:static!important;min-height:0!important;display:flex!important;flex-direction:row!important;align-items:center!important;gap:7px!important;padding:8px!important;background:#111318!important;border:1px solid #292c33!important;border-radius:11px!important;overflow-x:auto}
-  .career-nav-group{display:flex!important;flex-direction:row!important;align-items:center!important;gap:4px!important;white-space:nowrap}
-  .career-nav-label,.career-nav-footer{display:none!important}
-  .career-nav button{width:auto!important;min-height:36px!important;padding:7px 11px!important;display:inline-flex!important;justify-content:center!important;gap:6px!important;border-radius:7px!important;font-size:11px!important;color:#aeb1bb!important}
-  .career-nav button .nav-icon{display:none!important}
-  .career-nav button.active{background:var(--accent)!important;color:#111!important;border-color:var(--accent)!important;box-shadow:none!important}
-  .career-content{max-width:1080px!important;width:100%!important;margin:0 auto!important}
-  .career-content .card{background:#14161b!important;border:1px solid #292d35!important;border-radius:11px!important;padding:18px!important;box-shadow:none!important}
-  .career-content .hero{background:linear-gradient(110deg,color-mix(in srgb,var(--accent) 13%,#17191f),#14161b 72%)!important}
-  .career-content h2{font-size:17px!important;font-weight:850!important;margin:0 0 14px!important}
-  .career-content h2:after{display:none!important}
-  .career-content h3{font-size:13px!important;font-weight:800!important;color:#e6e7ec!important}
-  .career-content p{color:#c0c2ca}
-  .career-content .muted,.career-content small{color:#8e929d!important}
-  .career-content .stat{background:#191c22!important;border:1px solid #30343e!important;border-radius:8px!important}
-  .career-content .pill{background:#20232a!important;border:1px solid #383c46!important;color:#d7d9e0!important;border-radius:5px!important;font-size:10px!important}
-  .career-content .notice{background:color-mix(in srgb,var(--accent) 8%,#17191e)!important;border:1px solid color-mix(in srgb,var(--accent) 28%,#363943)!important;border-left:3px solid var(--accent)!important;border-radius:7px!important;color:#dfe0e5!important}
-  .career-content button{min-height:34px!important;padding:7px 11px!important;border-radius:7px!important;background:#20232a!important;border:1px solid #393d47!important;color:#e5e6eb!important;font-size:11px!important;box-shadow:none!important;transform:none!important}
-  .career-content button:hover:not(:disabled){background:#2a2e37!important;border-color:var(--accent)!important}
-  .career-content button.primary,.career-content .primary{background:var(--accent)!important;border-color:var(--accent)!important;color:#101115!important;font-weight:900!important}
-  .career-content select,.career-content input:not([type=checkbox]):not([type=radio]),.career-content textarea{background:#101217!important;border:1px solid #3a3e49!important;color:#f0f1f4!important;border-radius:7px!important}
-  .career-content table{border-collapse:collapse!important;min-width:560px!important}
-  .career-content th{background:#1b1e25!important;color:#aeb3bf!important;border-bottom:1px solid #373b45!important;text-transform:none!important;font-size:10px!important;letter-spacing:0!important}
-  .career-content td{border-bottom:1px solid #292d35!important;color:#d9dbe1!important}
-  .career-content tr.selected td{background:color-mix(in srgb,var(--accent) 12%,#17191f)!important}
-  .career-content .scroll{border:1px solid #30343d!important;border-radius:8px!important}
-  .career-content .round-switches{display:flex;gap:5px;flex-wrap:wrap;margin:10px 0}
-  .career-content .round-switches button.on{background:var(--accent)!important;color:#111!important}
-  .career-welcome{align-items:center!important;padding:23px!important;min-height:190px}
-  .career-welcome:after{display:none!important}
-  .career-eyebrow{font-size:9px!important;letter-spacing:1.5px!important;color:var(--accent)!important}
-  .career-player-name{font-size:clamp(25px,4vw,36px)!important;font-weight:900!important;letter-spacing:-1px!important}
-  .career-subtitle{font-size:12px!important;color:#aeb2bd!important}
-  .career-overall{min-width:104px!important;border-radius:9px!important;background:#0e1014!important;border:1px solid #343944!important;box-shadow:none!important}
-  .career-overall strong{font-size:38px!important}
-  .career-overall span{font-size:9px!important}
-  .career-kpis{gap:8px!important}
-  .career-kpi{background:#14161b!important;border:1px solid #292d35!important;border-radius:9px!important;padding:13px!important}
-  .career-kpi span{font-size:10px!important;color:#969ba7!important}
-  .career-kpi strong{font-size:21px!important}
-  .career-main-grid{grid-template-columns:1.05fr .95fr!important;gap:10px!important}
-  .career-attribute{grid-template-columns:65px 1fr 36px!important;gap:8px!important;font-size:11px!important;margin:10px 0!important}
-  .career-attribute .bar{height:6px!important;background:#2b2f38!important}
-  .career-attribute .bar span{background:var(--accent)!important}
-  .career-profile-grid{gap:7px!important}
-  .career-profile-stat{background:#191c22!important;border:1px solid #30343e!important;border-radius:8px!important}
-  .career-history-row{font-size:11px!important;border-color:#2b2e36!important}
-  .career-news-item{font-size:11px!important;border-color:#2b2e36!important}
-  #overlay{background:#050609df!important;backdrop-filter:blur(5px)!important}
-  #overlay .card{background:#17191f!important;border:1px solid #414550!important;border-radius:12px!important;box-shadow:0 18px 60px #0009!important}
-  #overlay .card button{margin:3px!important}
-  #app>.card.hero{max-width:850px!important;background:#14161b!important;border:1px solid #30343d!important;border-radius:12px!important;box-shadow:none!important}
-  #app>.card.hero .grid>div{background:#191c22!important;border:1px solid #30343d!important;border-radius:9px!important}
-  #app>.card.hero h1{font-size:clamp(23px,4vw,32px)!important}
-  #app>.card.hero #startCareerBtn{border-radius:8px!important}
-  @media(max-width:760px){
-   header{padding:8px 12px!important;height:auto!important;min-height:58px}
-   header .brand small{display:none!important}
-   header #topbar{font-size:10px!important}
-   main{padding:12px 10px 28px!important}
-   .career-nav{gap:4px!important;padding:6px!important}
-   .career-nav-group{gap:3px!important}
-   .career-nav button{padding:7px 9px!important;font-size:10px!important;min-height:34px!important}
-   .career-welcome{padding:16px!important;min-height:0}
-   .career-overall{min-width:78px!important;padding:9px!important}
-   .career-overall strong{font-size:30px!important}
-   .career-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-   .career-main-grid{grid-template-columns:1fr!important}
-   .career-content .card{padding:13px!important}
-   .career-content table{min-width:510px!important}
-  }
- `;
- const style=document.createElement('style');style.id='career-first-v2';style.textContent=css;document.head.appendChild(style);
+/* === Complete career UI rebuild v3 === */
+(function injectCareerOS(){
+ const css=String.raw\`
+ :root{--os-bg:#090a0e;--os-panel:#111319;--os-panel2:#171a22;--os-line:#292e39;--os-muted:#858d9c;--os-text:#eef0f5;--os-accent:var(--accent,#e32636)}
+ *{box-sizing:border-box}
+ body{background:radial-gradient(ellipse at 70% -20%,color-mix(in srgb,var(--os-accent) 18%,transparent),transparent 48%),var(--os-bg)!important;color:var(--os-text)!important;font-family:Inter,system-ui,'Malgun Gothic',sans-serif}
+ body>header{height:66px!important;position:sticky!important;top:0!important;z-index:20!important;display:flex!important;align-items:center!important;justify-content:space-between!important;padding:0 max(22px,calc((100vw - 1440px)/2))!important;background:#0d0f14f2!important;border-bottom:1px solid var(--os-line)!important;backdrop-filter:blur(16px)}
+ body>header strong{display:flex;align-items:center;gap:12px;color:var(--os-text)!important;font-size:14px!important;letter-spacing:.3px}
+ body>header strong:before{content:'C';display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--os-accent);color:#090a0e;font-weight:1000;font-size:17px}
+ body>header strong small{display:none}
+ body>header #topbar{font-size:11px;color:#aeb4c1;display:flex;align-items:center;gap:12px}
+ main{max-width:1440px!important;padding:24px 22px 60px!important}
+ .career-layout{display:grid!important;grid-template-columns:218px minmax(0,1fr)!important;gap:22px!important;align-items:start!important}
+ .career-nav{position:sticky!important;top:88px!important;display:flex!important;flex-direction:column!important;gap:15px!important;padding:13px!important;background:var(--os-panel)!important;border:1px solid var(--os-line)!important;border-radius:14px!important;overflow:visible!important}
+ .career-nav-group{display:flex!important;flex-direction:column!important;gap:4px!important}
+ .career-nav-label{display:block!important;padding:5px 10px 7px!important;color:#687181!important;font-size:9px!important;font-weight:900!important;letter-spacing:1.4px!important}
+ .career-nav-footer{display:block!important;margin-top:4px;padding:12px 10px 3px!important;border-top:1px solid var(--os-line)!important;color:#727b8a!important;font-size:10px!important;line-height:1.6}
+ .career-nav button{width:100%!important;min-height:42px!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:11px!important;padding:0 11px!important;border:1px solid transparent!important;border-radius:8px!important;background:transparent!important;color:#aeb4c1!important;text-align:left!important;font-size:12px!important;font-weight:650!important;box-shadow:none!important}
+ .career-nav button .nav-icon{display:inline-grid!important;place-items:center;width:21px!important;color:#7f8999!important;font-size:14px!important}
+ .career-nav button:hover{background:#1b1f28!important;color:#fff!important}
+ .career-nav button.active{background:color-mix(in srgb,var(--os-accent) 15%,#171a21)!important;border-color:color-mix(in srgb,var(--os-accent) 40%,#272b34)!important;color:#fff!important}
+ .career-nav button.active .nav-icon{color:var(--os-accent)!important}
+ .career-content{min-width:0!important;width:100%!important;max-width:1080px!important;margin:0 auto!important}
+ .career-content .card{margin:0 0 14px!important;padding:20px!important;background:var(--os-panel)!important;border:1px solid var(--os-line)!important;border-radius:13px!important;box-shadow:0 8px 30px #0002!important}
+ .career-content .hero{background:linear-gradient(115deg,color-mix(in srgb,var(--os-accent) 13%,#171a21),#111319 68%)!important}
+ .career-content h1{font-size:28px!important;letter-spacing:-.8px!important}
+ .career-content h2{font-size:18px!important;color:#f0f1f5!important;font-weight:850!important}
+ .career-content h3{font-size:13px!important;color:#e8eaf0!important;font-weight:850!important}
+ .career-content p{color:#b5bbc7}
+ .career-content small,.career-content .muted{color:var(--os-muted)!important}
+ .career-content button,.career-content select,.career-content input:not([type=checkbox]),.career-content textarea{font:inherit!important}
+ .career-content button{min-height:36px!important;padding:8px 12px!important;border:1px solid #343a47!important;border-radius:8px!important;background:#1b1f28!important;color:#e8eaf0!important;font-size:11px!important;font-weight:700!important;box-shadow:none!important;transition:.16s ease}
+ .career-content button:hover:not(:disabled){background:#272c37!important;border-color:var(--os-accent)!important}
+ .career-content button.primary,.career-content .primary{background:var(--os-accent)!important;border-color:var(--os-accent)!important;color:#08090c!important;font-weight:900!important}
+ .career-content select,.career-content input:not([type=checkbox]):not([type=radio]),.career-content textarea{background:#0c0e13!important;border:1px solid #343a47!important;border-radius:8px!important;color:#f0f1f5!important;padding:10px 12px!important}
+ .career-content .pill{background:#20242e!important;border:1px solid #343a46!important;color:#cbd0da!important;border-radius:5px!important;font-size:10px!important;padding:4px 8px!important}
+ .career-content .notice{background:color-mix(in srgb,var(--os-accent) 9%,#151820)!important;border:1px solid color-mix(in srgb,var(--os-accent) 28%,#343944)!important;border-left:3px solid var(--os-accent)!important;border-radius:8px!important;color:#e0e3ea!important}
+ .career-content .stat,.career-content .career-kpi,.career-content .career-profile-stat{background:#171a22!important;border:1px solid #2d333f!important;border-radius:9px!important}
+ .career-content .stats{gap:9px!important}
+ .career-content .stat{font-size:11px!important;color:#929baa!important}
+ .career-content .stat b{font-size:21px!important;color:#f2f3f7!important}
+ .career-content .bar{height:6px!important;background:#2b303b!important;border-radius:10px!important}
+ .career-content .bar span{background:var(--os-accent)!important;border-radius:10px!important}
+ .career-content table{border-collapse:collapse!important;min-width:560px!important}
+ .career-content th{background:#1b1f28!important;color:#9fa8b7!important;font-size:10px!important;border-bottom:1px solid #343a46!important}
+ .career-content td{border-bottom:1px solid #292e38!important;color:#d9dce4!important}
+ .career-content .scroll{border:1px solid #2c323e!important;border-radius:9px!important}
+ .career-content .round-switches button.on{background:var(--os-accent)!important;color:#08090c!important}
+ .career-welcome{display:flex!important;align-items:stretch!important;justify-content:space-between!important;gap:20px!important;padding:25px!important;min-height:220px}
+ .career-eyebrow{color:var(--os-accent)!important;font-size:9px!important;font-weight:900!important;letter-spacing:1.8px!important}
+ .career-player-name{font-size:clamp(30px,4vw,46px)!important;line-height:1.1!important;font-weight:950!important;letter-spacing:-1.6px!important;margin:10px 0}
+ .career-subtitle{font-size:12px!important;color:#aeb5c2!important}
+ .career-overall{align-self:center!important;min-width:124px!important;padding:15px!important;border:1px solid #343a46!important;border-radius:12px!important;background:#0c0e13!important;box-shadow:none!important}
+ .career-overall strong{font-size:48px!important;color:#fff!important}
+ .career-overall span{font-size:9px!important;color:#8992a1!important;letter-spacing:1.4px!important}
+ .career-kpis{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:9px!important;margin:0 0 14px!important}
+ .career-kpi{padding:14px!important}
+ .career-kpi span{font-size:10px!important;color:#929baa!important}
+ .career-kpi strong{display:block!important;margin:5px 0!important;font-size:22px!important;color:#f2f3f7!important}
+ .career-kpi small{font-size:9px!important}
+ .career-main-grid{display:grid!important;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr)!important;gap:14px!important;margin-bottom:14px!important}
+ .career-section-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;margin-bottom:13px!important}
+ .career-section-head h3{margin:0!important}
+ .career-attribute{display:grid!important;grid-template-columns:76px minmax(0,1fr) 40px!important;align-items:center!important;gap:10px!important;margin:13px 0!important;font-size:11px!important}
+ .career-attribute b{text-align:right!important;color:#e9ebf1!important}
+ .career-history-row,.career-news-item{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;padding:10px 0!important;border-bottom:1px solid #292e38!important;font-size:11px!important}
+ .career-news-item{justify-content:flex-start!important}
+ #overlay{background:#050609df!important;backdrop-filter:blur(8px)!important}
+ #overlay .card{background:#151820!important;border:1px solid #3a414e!important;border-radius:13px!important;box-shadow:0 25px 80px #000b!important}
+ #app>.card.hero{max-width:940px!important;margin:30px auto!important;padding:30px!important;background:linear-gradient(125deg,color-mix(in srgb,var(--os-accent) 16%,#171a21),#111319 72%)!important;border:1px solid #353b47!important;border-radius:16px!important}
+ #app>.card.hero .grid>div{padding:18px!important;background:#171a22!important;border:1px solid #303642!important;border-radius:11px!important}
+ #app>.card.hero #startCareerBtn{min-height:54px!important;font-size:14px!important;border-radius:9px!important}
+ @media(max-width:900px){.career-layout{grid-template-columns:180px minmax(0,1fr)!important;gap:13px!important}.career-nav{padding:8px!important}.career-nav button{font-size:11px!important}.career-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+ @media(max-width:650px){body>header{height:auto!important;min-height:58px;padding:9px 12px!important}body>header #topbar{font-size:9px!important;gap:5px}main{padding:12px 10px 30px!important}.career-layout{display:flex!important;flex-direction:column!important;gap:10px!important}.career-nav{position:static!important;width:100%!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}.career-nav-group{display:contents!important}.career-nav-label,.career-nav-footer{display:none!important}.career-nav button{min-height:37px!important;padding:6px 8px!important;font-size:10px!important}.career-nav button .nav-icon{width:17px!important}.career-content .card{padding:14px!important}.career-welcome{min-height:0;padding:17px!important}.career-player-name{font-size:29px!important}.career-overall{min-width:76px!important;padding:9px!important}.career-overall strong{font-size:31px!important}.career-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}.career-main-grid{grid-template-columns:1fr!important}.career-content table{min-width:520px!important}#app>.card.hero{padding:18px!important;margin:10px auto!important}}
+ \`;
+ const style=document.createElement('style');style.id='career-os-v3';style.textContent=css;document.head.appendChild(style);
 })();
+function header(){
+ const h=document.querySelector('body>header');
+ if(h)h.innerHTML='<strong>CAREER MODE <small>PLAYER JOURNEY</small></strong><span id="topbar"></span>';
+ const top=document.getElementById('topbar');
+ if(top)top.innerHTML=s?'<span>'+esc(me().name)+'</span><span>·</span><span>'+s.year+'.'+String(s.month).padStart(2,'0')+'</span><span>·</span><span>'+esc(me().team)+'</span><span>·</span><b>'+Number(s.cash||0).toFixed(0)+'만</b>':'새로운 선수 커리어';
+}
 function menu(){
  const groups=[
-  {items:[['home','홈'],['profile','선수 정보'],['training','훈련']]},
-  {items:[['calendar','일정'],['events','대회']]},
-  {items:[['transfer','이적'],['records','커리어'],['news','뉴스']]},
-  {items:[['roster','선수단'],['shop','상점'],['loadout','장비'],['settings','설정']]}
+  {label:'MY CAREER',items:[['home','⌂','커리어 홈'],['profile','◉','선수 프로필'],['training','↗','훈련 센터']]},
+  {label:'COMPETITION',items:[['calendar','▦','시즌 일정'],['events','♜','대회 기록'],['roster','♧','팀 로스터']]},
+  {label:'PRO CAREER',items:[['transfer','⇄','이적 & 계약'],['records','▤','커리어 아카이브'],['news','▣','리그 뉴스']]},
+  {label:'LIFESTYLE',items:[['shop','＋','장비 스토어'],['loadout','◇','내 장비'],['settings','⚙','환경 설정']]}
  ];
- return '<nav class="career-nav">'+groups.map(g=>'<div class="career-nav-group">'+g.items.map(([k,label])=>'<button class="'+(tab===k?'active':'')+'" onclick="setTab(\''+k+'\')">'+label+'</button>').join('')+'</div>').join('')+'</nav>';
+ return '<aside class="career-nav">'+groups.map(g=>'<div class="career-nav-group"><div class="career-nav-label">'+g.label+'</div>'+g.items.map(([k,ic,label])=>'<button class="'+(tab===k?'active':'')+'" onclick="setTab(\\''+k+'\\')"><span class="nav-icon">'+ic+'</span><span>'+label+'</span></button>').join('')+'</div>').join('')+'<div class="career-nav-footer">YOUR STORY, YOUR LEGACY<br>한 명의 선수로 시작하는 커리어</div></aside>';
 }
 function home(){
  const p=me(),t=teamOf(p),eff=effective(p),games=Number(s.seasonStats?.games||0),wins=Number(s.seasonStats?.wins||0);
- const rating=games?(Number(s.seasonStats.rating||0)/games).toFixed(2):'-';
- const offers=Number(s.offers?.length||0),items=(s.news||[]).slice(0,4),ovr=avg(eff);
- const progress=Math.round((Math.max(1,Math.min(12,s.month))/12)*100);
+ const rating=games?(Number(s.seasonStats.rating||0)/games).toFixed(2):'—',offers=(s.offers||[]).length,news=(s.news||[]).slice(0,4),ovr=avg(eff);
+ const progress=Math.max(0,Math.min(100,Math.round((Math.max(1,Math.min(12,s.month))/12)*100)));
  return '<div class="career-home">'+
- '<section class="card hero career-welcome"><div><div class="career-eyebrow">'+s.year+' SEASON · PLAYER CAREER</div><div class="career-player-name">'+esc(p.name)+'</div><div class="career-subtitle">'+esc(t?.name||p.team)+'　·　'+esc(p.league)+'　·　'+esc(p.pos)+'　·　'+p.age+'세</div><div class="career-action"><span class="pill">'+esc(p.type||'선수')+'</span><span class="pill">명성 '+Number(p.fame||0).toFixed(0)+'</span><span class="pill">잠재력 '+esc(p.potential||'-')+'</span></div><div class="career-action"><button class="primary" onclick="nextMonth()">'+s.year+'년 '+s.month+'월 진행　▶</button>'+(s.monthly?'<button onclick="showLast()">지난 결산 보기</button>':'')+'</div></div><div class="career-overall"><strong>'+ovr.toFixed(0)+'</strong><span>OVERALL</span></div></section>'+
- '<div class="career-kpis"><div class="career-kpi"><span>시즌 전적</span><strong>'+wins+'승 '+Math.max(0,games-wins)+'패</strong><small>'+games+'경기 출전</small></div><div class="career-kpi"><span>평균 평점</span><strong>'+rating+'</strong><small>이번 시즌 누적</small></div><div class="career-kpi"><span>컨디션</span><strong>'+Number(p.condition||0).toFixed(0)+'</strong><small>현재 선수 상태</small></div><div class="career-kpi"><span>감독 신뢰도</span><strong>'+Number(p.trust||0).toFixed(0)+'</strong><small>출전 기회에 영향</small></div></div>'+
- '<section class="card"><div class="career-section-head"><h3>시즌 진행</h3><span class="muted">'+s.month+' / 12월</span></div><div style="height:7px;background:#2b2f38;border-radius:10px;overflow:hidden"><div style="height:100%;width:'+progress+'%;background:var(--accent);border-radius:10px"></div></div><p class="muted" style="font-size:10px;margin-top:7px">이번 시즌 일정과 경기 결과가 월별로 진행됩니다.</p></section>'+
- '<div class="career-main-grid"><section class="card"><div class="career-section-head"><h3>핵심 능력치</h3><button onclick="setTab(\'profile\')">선수 정보 →</button></div>'+ATTR.map((a,i)=>'<div class="career-attribute"><span>'+a+'</span><div class="bar"><span style="display:block;height:100%;width:'+clamp(Number(eff[i]||0),0,100)+'%;border-radius:8px"></span></div><b>'+Number(eff[i]||0).toFixed(1)+'</b></div>').join('')+'</section>'+
- '<section class="card"><div class="career-section-head"><h3>커리어 현황</h3><button onclick="setTab(\'records\')">전체 기록 →</button></div><div class="career-history-row"><span>소속 팀</span><b>'+esc(t?.name||p.team)+'</b></div><div class="career-history-row"><span>소속 리그</span><b>'+esc(p.league)+'</b></div><div class="career-history-row"><span>계약 기간</span><b>'+Number(s.contract||0)+'년</b></div><div class="career-history-row"><span>연봉</span><b>'+Number(s.salary||0).toFixed(0)+'만 원</b></div><div class="career-history-row"><span>커리어 우승</span><b>'+(s.champions||[]).length+'회</b></div><div class="career-history-row"><span>이적 제안</span><b>'+offers+'건</b></div></section></div>'+
- '<section class="card"><div class="career-section-head"><h3>최근 소식</h3><button onclick="setTab(\'news\')">뉴스 더 보기 →</button></div>'+(items.length?items.map(x=>'<div class="career-news-item"><small>'+x.year+'.'+x.month+'</small>'+esc(x.text)+'</div>').join(''):'<p class="muted">아직 등록된 커리어 소식이 없습니다.</p>')+'</section>'+
- (offers?'<div class="notice">새로운 이적 제안 '+offers+'건이 도착했습니다. 이적 메뉴에서 확인하세요.</div>':'')+
- (asianYear(s.year)&&s.month>=6?'<div class="notice">아시안게임 국가대표 선발: '+(s.asianSelections?.[s.year]?.playerSelected?'대표팀에 선발되었습니다.':'아직 선발되지 않았습니다.')+'</div>':'')+
- '</div>';
+ '<section class="card hero career-welcome"><div><div class="career-eyebrow">PLAYER CAREER / '+s.year+' SEASON</div><div class="career-player-name">'+esc(p.name)+'</div><div class="career-subtitle">'+esc(t?.name||p.team)+'　·　'+esc(p.league)+'　·　'+esc(p.pos)+'　·　'+p.age+'세</div><div class="career-action"><span class="pill">'+esc(p.type||'프로 선수')+'</span><span class="pill">명성 '+Number(p.fame||0).toFixed(0)+'</span><span class="pill">잠재력 '+esc(p.potential||'—')+'</span></div><div class="career-action" style="margin-top:17px"><button class="primary" onclick="nextMonth()">'+s.year+'년 '+s.month+'월 진행　▶</button>'+(s.monthly?'<button onclick="showLast()">월간 결산 보기</button>':'')+'</div></div><div class="career-overall"><strong>'+ovr.toFixed(0)+'</strong><span>OVERALL</span></div></section>'+
+ '<div class="career-kpis"><div class="career-kpi"><span>SEASON RECORD</span><strong>'+wins+'승 '+Math.max(0,games-wins)+'패</strong><small>'+games+'경기 출전</small></div><div class="career-kpi"><span>AVG. RATING</span><strong>'+rating+'</strong><small>시즌 평균 평점</small></div><div class="career-kpi"><span>CONDITION</span><strong>'+Number(p.condition||0).toFixed(0)+'</strong><small>현재 컨디션</small></div><div class="career-kpi"><span>COACH TRUST</span><strong>'+Number(p.trust||0).toFixed(0)+'</strong><small>감독 신뢰도</small></div></div>'+
+ '<section class="card"><div class="career-section-head"><h3>SEASON PROGRESS <span class="muted">/ '+s.year+'</span></h3><b>'+s.month+'월 / 12월</b></div><div style="height:7px;background:#2b303b;border-radius:10px;overflow:hidden"><div style="height:100%;width:'+progress+'%;background:var(--accent);border-radius:10px"></div></div><p class="muted" style="font-size:10px;margin:8px 0 0">월별 일정을 진행하며 경기, 성장, 계약 상황을 확인하세요.</p></section>'+
+ '<div class="career-main-grid"><section class="card"><div class="career-section-head"><h3>PLAYER ATTRIBUTES</h3><button onclick="setTab(\\'profile\\')">전체 능력치 →</button></div>'+ATTR.map((a,i)=>'<div class="career-attribute"><span>'+a+'</span><div class="bar"><span style="display:block;height:100%;width:'+clamp(Number(eff[i]||0),0,100)+'%"></span></div><b>'+Number(eff[i]||0).toFixed(1)+'</b></div>').join('')+'</section>'+
+ '<section class="card"><div class="career-section-head"><h3>CAREER STATUS</h3><button onclick="setTab(\\'records\\')">기록 보기 →</button></div><div class="career-history-row"><span>소속 팀</span><b>'+esc(t?.name||p.team)+'</b></div><div class="career-history-row"><span>소속 리그</span><b>'+esc(p.league)+'</b></div><div class="career-history-row"><span>계약 잔여</span><b>'+Number(s.contract||0)+'년</b></div><div class="career-history-row"><span>연봉</span><b>'+Number(s.salary||0).toFixed(0)+'만 원</b></div><div class="career-history-row"><span>통산 우승</span><b>'+(s.champions||[]).length+'회</b></div><div class="career-history-row"><span>이적 제안</span><b>'+offers+'건</b></div></section></div>'+
+ '<section class="card"><div class="career-section-head"><h3>THE LATEST</h3><button onclick="setTab(\\'news\\')">뉴스 전체 →</button></div>'+(news.length?news.map(x=>'<div class="career-news-item"><small>'+x.year+'.'+x.month+'</small><span>'+esc(x.text)+'</span></div>').join(''):'<p class="muted">아직 등록된 소식이 없습니다. 첫 시즌을 시작해보세요.</p>')+'</section>'+
+ (offers?'<div class="notice">새로운 이적 제안 '+offers+'건이 도착했습니다. 이적 & 계약 메뉴에서 확인할 수 있습니다.</div>':'')+
+ (asianYear(s.year)&&s.month>=6?'<div class="notice">🇰🇷 아시안게임 국가대표 선발: '+(s.asianSelections?.[s.year]?.playerSelected?'대표팀에 선발되었습니다.':'아직 선발되지 않았습니다.')+'</div>':'')+'</div>';
+}
+function startOptions(){
+ const types=[...TYPES].sort(()=>Math.random()-.5).slice(0,3);window.startTypeChoices=types;
+ document.getElementById('app').innerHTML='<section class="card hero"><div class="career-eyebrow">CREATE YOUR PLAYER</div><h1>당신의 커리어를 시작하세요.</h1><p>아카데미 신인 선수로 출발해 리그 정상과 월즈 우승을 향해 나아갑니다.</p><div class="notice">선택한 팀의 신인·후보 선수로 합류합니다. 기존 주전 선수단은 유지됩니다.</div><div class="grid"><div><h3>01　선수 기본 정보</h3><label>닉네임</label><input id="nick" maxlength="20" value="ROOKIE" style="width:100%"><label>포지션</label><select id="pos" style="width:100%">'+POS.map(x=>'<option>'+x+'</option>').join('')+'</select><label>시작 팀</label><select id="startTeam" style="width:100%"></select><p class="muted">시작 리그: ACADEMY</p></div><div><h3>02　선수 플레이 유형</h3><label>플레이 유형</label><select id="startType" style="width:100%">'+types.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('')+'</select><p class="muted">선택한 유형에 따라 관련 능력치의 성장과 하락 특성이 달라집니다.</p><div class="notice">커리어를 진행하며 실력, 명성, 출전 기회, 이적 제안을 직접 만들어가세요.</div></div></div><button id="startCareerBtn" type="button" class="primary" style="display:block;width:100%;margin-top:18px;min-height:54px;font-size:14px" onclick="try{newGame()}catch(e){alert(\'시작 오류: \'+e.message);console.error(e)}">선수 커리어 시작　→</button><p id="launchHelp" class="muted">게임 준비 완료</p></section>';
+ updateStartTeams();
 }
 function render(){
  applyGeneratedNameCleanup();applyRequestedEconomyPatch();applyRookiePipelinePatch();applyTeamTheme();header();
  if(!s){startOptions();return}
  if(s.retired){document.getElementById('app').innerHTML=careerEnding();return}
  const pages={home,profile:careerProfilePage,training,roster,events,calendar,transfer,shop,loadout,records,news:newsTab,settings};
- document.getElementById('app').innerHTML='<div class="career-layout">'+menu()+'<section class="career-content">'+(pages[tab]||home)()+'</section></div>';
+ const page=(pages[tab]||home)();
+ document.getElementById('app').innerHTML='<div class="career-layout">'+menu()+'<section class="career-content">'+page+'</section></div>';
 }
-
 try { if(!load())startOptions();else render();header();var h=document.getElementById('launchHelp');if(h)h.textContent='게임 준비 완료 · 시작 버튼을 누르세요.'; } catch(e) { console.error('초기 화면 오류',e); s=null; try { startOptions(); header(); } catch(e2) { document.getElementById('app').innerHTML='<section class="card"><h2>게임을 시작할 수 없습니다</h2><p>브라우저 오류: '+String(e2.message)+'</p><button onclick="location.reload()">다시 시도</button></section>'; } }
 </script></body></html>
