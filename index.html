@@ -2150,7 +2150,7 @@ function render(){
 
 /* === Complete career UI rebuild v3 === */
 (function injectCareerOS(){
- const css=String.raw\`
+ const css=String.raw`
  :root{--os-bg:#090a0e;--os-panel:#111319;--os-panel2:#171a22;--os-line:#292e39;--os-muted:#858d9c;--os-text:#eef0f5;--os-accent:var(--accent,#e32636)}
  *{box-sizing:border-box}
  body{background:radial-gradient(ellipse at 70% -20%,color-mix(in srgb,var(--os-accent) 18%,transparent),transparent 48%),var(--os-bg)!important;color:var(--os-text)!important;font-family:Inter,system-ui,'Malgun Gothic',sans-serif}
@@ -2222,7 +2222,7 @@ function render(){
  #app>.card.hero #startCareerBtn{min-height:54px!important;font-size:14px!important;border-radius:9px!important}
  @media(max-width:900px){.career-layout{grid-template-columns:180px minmax(0,1fr)!important;gap:13px!important}.career-nav{padding:8px!important}.career-nav button{font-size:11px!important}.career-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
  @media(max-width:650px){body>header{height:auto!important;min-height:58px;padding:9px 12px!important}body>header #topbar{font-size:9px!important;gap:5px}main{padding:12px 10px 30px!important}.career-layout{display:flex!important;flex-direction:column!important;gap:10px!important}.career-nav{position:static!important;width:100%!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}.career-nav-group{display:contents!important}.career-nav-label,.career-nav-footer{display:none!important}.career-nav button{min-height:37px!important;padding:6px 8px!important;font-size:10px!important}.career-nav button .nav-icon{width:17px!important}.career-content .card{padding:14px!important}.career-welcome{min-height:0;padding:17px!important}.career-player-name{font-size:29px!important}.career-overall{min-width:76px!important;padding:9px!important}.career-overall strong{font-size:31px!important}.career-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}.career-main-grid{grid-template-columns:1fr!important}.career-content table{min-width:520px!important}#app>.card.hero{padding:18px!important;margin:10px auto!important}}
- \`;
+ `;
  const style=document.createElement('style');style.id='career-os-v3';style.textContent=css;document.head.appendChild(style);
 })();
 function header(){
